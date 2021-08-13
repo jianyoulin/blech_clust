@@ -5,6 +5,8 @@ from scipy.interpolate import interp1d
 from sklearn.mixture import GaussianMixture
 import pylab as plt
 from sklearn.decomposition import PCA
+import umap
+# pip install umap-learn
 
 def get_filtered_electrode(data, freq = [300.0, 3000.0], sampling_rate = 30000.0):
 	el = 0.195*(data)
@@ -72,6 +74,12 @@ def implement_pca(scaled_slices):
 	pca_slices = pca.fit_transform(scaled_slices)	
 	return pca_slices, pca.explained_variance_ratio_
 
+def implement_umap(scaled_slices, n_pc=3, n_neighbors=30, min_dist=0.0):
+    reducer = umap.UMAP(n_components=n_pc,
+                        n_neighbors=n_neighbors,
+                        min_dist=min_dist)
+    return reducer.fit_transform(scaled_slices)
+	
 def clusterGMM(data, n_clusters, n_iter, restarts, threshold):
 	
 

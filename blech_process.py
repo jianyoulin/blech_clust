@@ -30,6 +30,10 @@ except:
 # Alternatively, if running on jetstream (or personal computer) using GNU parallel, get sys.argv[1]
 	electrode_num = int(sys.argv[1]) - 1 
 
+# Pull out the method for clustering
+clustering = sys.argv[2]
+print(clustering)
+ 
 # Check if the directories for this electrode number exist - if they do, delete them (existence of the directories indicates a job restart on the cluster, so restart afresh)
 if os.path.isdir('./Plots/'+str(electrode_num)):
 	shutil.rmtree('./Plots/'+str(electrode_num))
@@ -141,8 +145,11 @@ np.save('./spike_times/electrode%i/spike_times.npy' % electrode_num, times_dejit
 # Scale the dejittered slices by the energy of the waveforms
 scaled_slices, energy = scale_waveforms(slices_dejittered)
 
-# Run PCA on the scaled waveforms
-pca_slices, explained_variance_ratio = implement_pca(scaled_slices)
+# Run umap or PCA on the scaled waveforms
+if clustering == 'PCA':
+    pca_slices, explained_variance_ratio = implement_pca(scaled_slices)
+elif clustering == 'UMAP':
+    pca_slices = implement_umap(scaled_slices)
 
 # Save the pca_slices, energy and amplitudes to the spike_waveforms folder for this electrode
 np.save('./spike_waveforms/electrode%i/pca_waveforms.npy' % electrode_num, pca_slices)
@@ -151,19 +158,23 @@ np.save('./spike_waveforms/electrode%i/spike_amplitudes.npy' % electrode_num, am
 
 
 # Create file for saving plots, and plot explained variance ratios of the PCA
-fig = plt.figure()
-x = np.arange(len(explained_variance_ratio))
-plt.plot(x, explained_variance_ratio)
-plt.title('Variance ratios explained by PCs')
-plt.xlabel('PC #')
-plt.ylabel('Explained variance ratio')
-fig.savefig('./Plots/%i/Plots/pca_variance.png' % electrode_num, bbox_inches='tight')
-plt.close("all")
+if clustering == 'PCA':
+    fig = plt.figure()
+    x = np.arange(len(explained_variance_ratio))
+    plt.plot(x, explained_variance_ratio)
+    plt.title('Variance ratios explained by PCs')
+    plt.xlabel('PC #')
+    plt.ylabel('Explained variance ratio')
+    fig.savefig('./Plots/%i/Plots/pca_variance.png' % electrode_num, bbox_inches='tight')
+    plt.close("all")
 
 # Make an array of the data to be used for clustering, and delete pca_slices, scaled_slices, energy and amplitudes
 n_pc = 3
 data = np.zeros((len(pca_slices), n_pc + 2))
-data[:,2:] = pca_slices[:,:n_pc]
+if clustering == 'PCA':
+    data[:,2:] = pca_slices[:,:n_pc]
+elif clustering == 'UMAP':
+    data[:,2:] = pca_slices[:,:]
 data[:,0] = energy[:]/np.max(energy)
 data[:,1] = np.abs(amplitudes)/np.max(np.abs(amplitudes))
 del pca_slices; del scaled_slices; del energy
