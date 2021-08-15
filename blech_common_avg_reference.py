@@ -8,7 +8,16 @@ import os
 import easygui
 
 # Ask for the directory where the hdf5 file sits, and change to that directory
-dir_name = easygui.diropenbox()
+# Get name of directory with the data files
+try: # Read root_data_dir.txt, and cd to that directory
+    f = open('root_data_dir.txt', 'r')
+    dir_name = []
+    for line in f.readlines():
+        dir_name.append(line)
+    f.close()
+    dir_name = easygui.diropenbox(msg='Select data folder', default = dir_name[0][:-1])
+except:
+    dir_name = easygui.diropenbox(msg='Select data folder') # "E:\testing_hdf5s\JY07_Clustering" #
 os.chdir(dir_name)
 
 # Look for the hdf5 file in the directory

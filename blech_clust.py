@@ -10,7 +10,34 @@ import multiprocessing
 import read_file
 
 # Get name of directory with the data files
-dir_name = easygui.diropenbox() # "E:\testing_hdf5s\JY07_Clustering" #
+try: # Read root_data_dir.txt, and cd to that directory
+    f = open('root_data_dir.txt', 'r')
+    dir_name = []
+    for line in f.readlines():
+        dir_name.append(line)
+    f.close()
+    dir_name = easygui.diropenbox(msg='Select data folder', default = dir_name[0][:-1])
+except:
+    dir_name = easygui.diropenbox(msg='Select data folder') # "E:\testing_hdf5s\JY07_Clustering" #
+    # Check with user to see if the right ports, inputs and sampling rate were identified. Screw user if something was wrong, and terminate blech_clust
+    check = easygui.ynbox(msg = 'Reset Root of the Data Directory?', title = "Yes for setting; No if you don't know what to do")
+    # Go ahead only if the user approves by saying yes
+    if check:
+        sep = os.path.sep
+        path_elems = dir_name.split(sep)
+        path_ = dir_name
+        path_list = [dir_name]
+        for i in range(len(path_elems)-2):
+            path_ = os.path.split(path_)[0]
+            path_list.append(path_)
+    # Now get the emg channel numbers, and convert them to integers
+    set_dir = easygui.multchoicebox(msg = 'Choose the root directory', 
+                                    choices = path_list)
+    # Dump the directory name where blech_process has to cd
+    f = open('root_data_dir.txt', 'w')
+    print(set_dir[0], file=f)
+    f.close()
+
 
 # Get the type of data files (.rhd or .dat)
 file_type = easygui.multchoicebox(msg = 'What type of files am I dealing with?', 

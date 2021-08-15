@@ -20,7 +20,7 @@ from sklearn.mixture import GaussianMixture
 import blech_waveforms_datashader
 
 # Get directory where the hdf5 file sits, and change to that directory
-dir_name = '/mnt/e/testing_hdf5s/for_clustering' #easygui.diropenbox()
+dir_name = easygui.diropenbox() # '/mnt/e/testing_hdf5s/for_clustering' #
 os.chdir(dir_name)
 
 # Clean up the memory monitor files, pass if clean up has been done already
