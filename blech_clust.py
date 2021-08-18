@@ -11,7 +11,7 @@ import read_file
 
 # Get name of directory with the data files
 try: # Read root_data_dir.txt, and cd to that directory
-    f = open('root_data_dir.txt', 'r')
+    f = open('root_data_dir.dir', 'r')
     dir_name = []
     for line in f.readlines():
         dir_name.append(line)
@@ -34,7 +34,7 @@ except:
     set_dir = easygui.multchoicebox(msg = 'Choose the root directory', 
                                     choices = path_list)
     # Dump the directory name where blech_process has to cd
-    f = open('root_data_dir.txt', 'w')
+    f = open('root_data_dir.dir', 'w')
     print(set_dir[0], file=f)
     f.close()
 
