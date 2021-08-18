@@ -511,7 +511,7 @@ while True:
             # #continue
         
     else: # when initially more then 1 cluster (2 or more) been chosen
-        merge = easygui.multchoicebox(msg = 'I want to merge these clusters into one unit' \
+        merge = easygui.multchoicebox(msg = 'I want to merge these clusters into one unit' +\
                                             '(True = Yes, False = No)', choices = ('True', 'False'))
         merge = ast.literal_eval(merge[0])
     
@@ -699,7 +699,10 @@ while True:
                         ISIs = np.ediff1d(np.sort(unit_times))/30.0
                         violations1 = 100.0*float(np.sum(ISIs < 1.0)/len(unit_times))
                         violations2 = 100.0*float(np.sum(ISIs < 2.0)/len(unit_times))
-                        proceed = easygui.multchoicebox(msg = 'My merged cluster has %.1f percent (<2ms) and %.1f percent (<1ms) ISI violations out of %i total waveforms. I want to still merge these clusters into one unit (True = Yes, False = No)' % (violations2, violations1, len(unit_times)), choices = ('True', 'False'))
+                        
+                        proceed = easygui.multchoicebox(msg = msg_text(v1=violations2, v2=violations1, lth=len(unit_times)), choices = ('True', 'False'))
+                        
+                        #proceed = easygui.multchoicebox(msg = 'My merged cluster has %.1f percent (<2ms) and %.1f percent (<1ms) ISI violations out of %i total waveforms. I want to still merge these clusters into one unit (True = Yes, False = No)' % (violations2, violations1, len(unit_times)), choices = ('True', 'False'))
                         proceed = ast.literal_eval(proceed[0])
 
                         # Create unit if the user agrees to proceed, else abort and go back to start of the loop 
