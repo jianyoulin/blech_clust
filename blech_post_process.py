@@ -21,7 +21,7 @@ import blech_waveforms_datashader
 
 # Get directory where the hdf5 file sits, and change to that directory
 try: # Read root_data_dir.txt, and cd to that directory
-    f = open('root_data_dir.txt', 'r')
+    f = open('root_data_dir.dir', 'r')
     dir_name = []
     for line in f.readlines():
         dir_name.append(line)
@@ -116,13 +116,19 @@ def get_unit_info(unit_num, electrode_num, s_u, u_t, waveform_num):
     return description
                                          
 
-# # define a function to concatenate text for the use of easugui TITLE
-# def msg_text(v2=violations2, v1=violations1, lth=len(unit_times)):
-    # t = 'My merged cluster has %.1f percent (<2ms)' % violations2 \
-        # 'and %.1f percent (<1ms) ISI violations' % violations1 \ 
-        # 'out of %i total waveforms.' % len(unit_times) \
-        # 'I want to still merge these clusters into one unit (True = Yes, False = No)'
-    # return t
+# Define a function to get unit description
+def get_unit_info1(unit_num, electrode_num, s_u, u_t, waveform_num):
+    """
+    s_u: single_unit; u_t: unit_type
+    """
+    description = easygui.ynbox(msg = 'unit_number: {}\n\n'.format(unit_num)+\
+                                'electrode_number: {}\n\n'.format(electrode_num)+\
+                                'fast_spiking (Yes: 1; No: 0): {}\n\n'.format(1 if u_t=="fast_spiking" else 0)+\
+                                'regular_spiking (Yes: 1; No: 0): {}\n\n'.format(1 if u_t=="regular_spiking" else 0)+\
+                                'single_unit (Yes: 1; No: 0): {}\n\n'.format(1 if s_u=="True" else 0, waveform_num)+\
+                                'waveform_count: {}'.format(waveform_num),
+                          title = 'Check unit information from you selection')
+    return description
 
 def msg_text(v2=None, v1=None, lth=None):
     t = 'My merged cluster has {} percent (<2ms)'.format(round(v2,2))+\
@@ -182,6 +188,7 @@ def save_units(unit_description, max_unit, unit_name=None, electrode_num = None,
     # Finally increment max_unit and create a new unit name
     max_unit += 1
     unit_name = 'unit%03d' % int(max_unit + 1)
+    return max_unit, unit_name
 
     # Get a new unit_descriptor table row for this new unit
     #unit_description = table.row
@@ -311,7 +318,7 @@ while True:
                 unit_times = spike_times[np.where(predictions == int(clusters[0]))[0]]          # Do the same thing for the spike times
                 unit_times = unit_times[np.where(split_predictions == chosen_split[0])[0]]
 
-                save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                            u_waveforms=unit_waveforms, u_times=unit_times)
                 unit_description = table.row
 
@@ -379,14 +386,14 @@ while True:
                     ISIs = np.ediff1d(np.sort(unit_times))/30.0
                     violations1 = 100.0*float(np.sum(ISIs < 1.0)/len(unit_times))
                     violations2 = 100.0*float(np.sum(ISIs < 2.0)/len(unit_times))
-                    proceed = easygui.multchoicebox(msg = msg_text(v1=violations2, v2=violations1, lth=len(unit_times)), 
+                    proceed = easygui.multchoicebox(msg = msg_text(v2=violations2, v1=violations1, lth=len(unit_times)), 
                                                     choices = ('True', 'False'))
                     #proceed = easygui.multchoicebox(msg = 'My merged cluster has %.1f percent (<2ms) and %.1f percent (<1ms) ISI violations out of %i total waveforms. I want to still merge these clusters into one unit (True = Yes, False = No)' % (violations2, violations1, len(unit_times)), choices = ('True', 'False'))
                     proceed = ast.literal_eval(proceed[0])
 
                     # Create unit if the user agrees to proceed, else include each split_cluster as a separate unit 
                     if proceed:
-                        save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                        max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                                    u_waveforms=unit_waveforms, u_times=unit_times)
                         unit_description = table.row
                     
@@ -427,7 +434,7 @@ while True:
                         unit_times = spike_times[np.where(predictions == int(clusters[0]))[0]]          # Do the same thing for the spike times
                         unit_times = unit_times[np.where(split_predictions == split_cluster)[0]]
                         
-                        save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                        max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                                    u_waveforms=unit_waveforms, u_times=unit_times)
                         unit_description = table.row
                          
@@ -472,7 +479,7 @@ while True:
             unit_waveforms = spike_waveforms[np.where(predictions == int(clusters[0]))[0], :]
             unit_times = spike_times[np.where(predictions == int(clusters[0]))[0]]
 
-            save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+            max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                        u_waveforms=unit_waveforms, u_times=unit_times)
             unit_description = table.row
    
@@ -552,7 +559,7 @@ while True:
             # Create unit if the user agrees to proceed, else abort and go back to start of the loop 
             if proceed[0] == 'Save_the_Merged':
 
-                save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                            u_waveforms=unit_waveforms, u_times=unit_times)
                 unit_description = table.row
 
@@ -660,7 +667,7 @@ while True:
                     unit_times = spike_times[merged_clusters_indexes] #np.where(predictions == int(merged_clusters))[0]]          # Do the same thing for the spike times
                     unit_times = unit_times[np.where(split_predictions == int(chosen_merged_split[0]))[0]]
 
-                    save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                    max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                                u_waveforms=unit_waveforms, u_times=unit_times)
                     unit_description = table.row
                 
@@ -700,14 +707,14 @@ while True:
                         violations1 = 100.0*float(np.sum(ISIs < 1.0)/len(unit_times))
                         violations2 = 100.0*float(np.sum(ISIs < 2.0)/len(unit_times))
                         
-                        proceed = easygui.multchoicebox(msg = msg_text(v1=violations2, v2=violations1, lth=len(unit_times)), choices = ('True', 'False'))
+                        proceed = easygui.multchoicebox(msg = msg_text(v2=violations2, v1=violations1, lth=len(unit_times)), choices = ('True', 'False'))
                         
                         #proceed = easygui.multchoicebox(msg = 'My merged cluster has %.1f percent (<2ms) and %.1f percent (<1ms) ISI violations out of %i total waveforms. I want to still merge these clusters into one unit (True = Yes, False = No)' % (violations2, violations1, len(unit_times)), choices = ('True', 'False'))
                         proceed = ast.literal_eval(proceed[0])
 
                         # Create unit if the user agrees to proceed, else abort and go back to start of the loop 
                         if proceed:
-                            save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                            max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                                        u_waveforms=unit_waveforms, u_times=unit_times)
                             unit_description = table.row
                         else: continue
@@ -721,7 +728,7 @@ while True:
                             unit_times = spike_times[merged_clusters_indexes] #np.where(predictions == int(merged_clusters))[0]]          # Do the same thing for the spike times
                             unit_times = unit_times[np.where(split_predictions == int(c))[0]]
 
-                            save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                            max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                                        u_waveforms=unit_waveforms, u_times=unit_times)
                             unit_description = table.row
                         
@@ -783,7 +790,7 @@ while True:
                 unit_waveforms = spike_waveforms[np.where(predictions == int(cluster))[0], :]
                 unit_times = spike_times[np.where(predictions == int(cluster))[0]]
 
-                save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
+                max_unit, unit_name = save_units(unit_description, max_unit, unit_name=unit_name, electrode_num = electrode_num, 
                            u_waveforms=unit_waveforms, u_times=unit_times)
                 unit_description = table.row
 
