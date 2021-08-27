@@ -89,7 +89,7 @@ print(sampling_rate)
 hf5 = tables.open_file(hdf5_name, 'r+')
 
 # read param file to get taste list
-ts = {'A':'Acid', 'W':'Water', 'S':'Sucrose', 'M':'MSG', 'N':'NaCl', 'X':'SN_Mixture', 'r':'rWater', 'L':'LiCl', 'Q':'QHCl'}
+ts = {'A':'Acid', 'W':'Water', 'S':'Sucrose', 'M':'MSG', 'N':'NaCl', 'X':'SN_Mixture', 'R':'rWater', 'L':'LiCl', 'Q':'QHCl'}
 # get the exp param file
 
 with open (exp_params_file, 'r') as f:
@@ -99,7 +99,7 @@ with open (exp_params_file, 'r') as f:
         if 'valve' in this_line:
             digin_tastes.append(this_line.split('=')[1][0])
             digin_trial_times.append(float(this_line.split('=')[2][0:3]))
-    digin_tastes = [ts[t] for t in digin_tastes]
+    digin_tastes = [ts[t.upper()] for t in digin_tastes]
     print(list(zip(digin_tastes, digin_trial_times)))
 
 # Grab the names of the arrays containing digital inputs, and pull the data into a numpy array
@@ -526,8 +526,8 @@ for i, dig_in in enumerate(trains_dig_in): #trains_dig_in:
         plt.close("all")
 ###################3
 # Plot PSTHs and rasters aligned to cue presentation
-
-taste_colors = ['y', 'b', 'g', 'k']
+cmap = plt.get_cmap("tab10")
+taste_colors = cmap(np.arange(20))
 for unit in range(len(units)):
     fig, axes = plt.subplots(nrows = 1, ncols=1, sharey='col',
                              sharex=True, squeeze=False, figsize = (4*3, 4*2))
