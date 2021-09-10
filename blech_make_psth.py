@@ -12,7 +12,7 @@ import pylab as plt
 #matplotlib.rcParams.update({'figure.autolayout': True})
 from scipy.stats import ttest_ind
 import seaborn as sns
-sns.set(style="white", context="talk", font_scale=1.8)
+sns.set(style="white", context="talk", font_scale=1)
 sns.set_color_codes(palette = 'colorblind')
 #plt.style.use(['seaborn-colorblind', 'seaborn-talk'])
 #font = {'weight' : 'bold',
@@ -180,7 +180,7 @@ for unit in range(num_units):
 	data = np.array(data)
 
 	# Now get ready for the plotting by first making the axes (both x and y axis will be shared across plots)
-	fig, ax = plt.subplots(len(trains_dig_in), sharex=True, sharey=True)
+	fig, ax = plt.subplots(nrows=len(trains_dig_in), squeeze=False, sharex=True, sharey=True)
 
 	# Now run through the tastes and make the plots
 	for taste in range(len(trains_dig_in)):
@@ -195,9 +195,9 @@ for unit in range(num_units):
 		time = np.array(time)
 		plot_points = np.where((time >= plot_lim[0])*(time <= plot_lim[1]))[0]
 
-		ax[taste].plot(time[plot_points], spike_rate[plot_points], label = 'Taste {:d}'.format(taste+1))
-		ax[taste].legend(loc = 'upper right', fontsize = 15)
-	ax[0].set_title("Unit: {:d}, Window: {:d} ms, Step: {:d} ms".format(unit, params[0], params[1]))	
+		ax[taste,0].plot(time[plot_points], spike_rate[plot_points], label = 'Taste {:d}'.format(taste+1))
+		ax[taste,0].legend(loc = 'upper right', fontsize = 15)
+	ax[0,0].set_title("Unit: {:d}, Window: {:d} ms, Step: {:d} ms".format(unit, params[0], params[1]))	
 	# Bring the plots closer together
 	fig.subplots_adjust(hspace=0)
 	# Remove xticks from all but the last plot
