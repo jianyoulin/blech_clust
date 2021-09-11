@@ -138,6 +138,17 @@ for group in range(num_groups):
 
 print("Common average reference for {:d} groups calculated".format(num_groups))
 
+np.save('common_average_reference.npy', common_average_reference)
+# get common group assignment for each channel
+group_assignments = np.zeros(shape=(len(raw_electrodes)))
+for e in range(len(raw_electrodes)):
+    for i, l in enumerate(CAR_electrodes):
+        if e in l:
+            group_assignments[e] = i
+            continue
+np.save('group_assignments.npy', group_assignments)    
+
+ 
 # Now run through the raw electrode data and subtract the common average reference from each of them
 for electrode in raw_electrodes:
     electrode_num = int(str.split(electrode._v_pathname, 'electrode')[-1])
