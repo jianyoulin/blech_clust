@@ -40,6 +40,11 @@ for i in range(len(trials)):
 os.chdir('emg_BSA_results')
 
 # Add group to hdf5 file for emg BSA results
+# Create an ancillary_analysis group in the hdf5 file, and write these arrays to that group
+try:
+	hf5.remove_node('/emg_BSA_results', recursive = True)
+except:
+	pass
 hf5.create_group('/', 'emg_BSA_results')
 
 # Omega doesn't vary by trial, so just pick it up from the 1st taste and trial, and delete everything else

@@ -74,13 +74,14 @@ try:
 	hf5.remove_node('/ancillary_analysis/gapes')
 	hf5.remove_node('/ancillary_analysis/ltps')
 	hf5.remove_node('/ancillary_analysis/sig_trials')
-	hf5.remove_node('/ancillary_analysis/emg_BSA_results')
+#	hf5.remove_node('/ancillary_analysis/emg_BSA_results')
 except:
 	pass
 hf5.create_array('/ancillary_analysis', 'gapes', final_gapes)
 hf5.create_array('/ancillary_analysis', 'ltps', final_ltps)
 hf5.create_array('/ancillary_analysis', 'sig_trials', final_sig_trials)
-hf5.create_array('/ancillary_analysis', 'emg_BSA_results', final_emg_BSA_results)
+#hf5.create_array('/ancillary_analysis', 'emg_BSA_results', final_emg_BSA_results)
+np.save('emg_BSA_results.npy', final_emg_BSA_results)
 
 hf5.flush()
 
