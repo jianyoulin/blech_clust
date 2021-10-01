@@ -1,5 +1,6 @@
 # Run through all the raw electrode data, and subtract a common average reference from every electrode's recording
-# The user specifies the electrodes to be used as a common average group 
+# The user specifies the electrodes to be used as a common average group
+# use only for one headstage
 
 # Import stuff!
 import tables
@@ -35,11 +36,12 @@ file_list = os.listdir('./')
 
 # Get the Intan amplifier ports used in the recordings
 ports = list(set(f[4] for f in file_list if f[:3] == 'amp'))
+
 # Sort the ports in alphabetical order
-ports.sort()
+ports.sort() # ['A']
 
 # Get the electrode channels on each port
-num_electrodes = {}
+num_electrodes = {} # {'A': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
 for port in ports:
     num_electrodes[port] = list(set(int(f[6:9]) for f in file_list if f[:5] == 'amp-{}'.format(port)))
 
@@ -51,14 +53,51 @@ for port in ports:
 num_groups = easygui.multenterbox(msg = "How many common average groups do you have in the dataset?", fields = ["Number of CAR groups"])
 num_groups = int(num_groups[0])
 
+# # Ask the user to choose the port number and electrodes for each of the groups
+# group_ports = []
+# average_electrodes = []
+# for i in range(num_groups):
+#     if len(ports) == 1:
+#         temp_ports = ports.copy()
+#         temp_ports.append('more options')
+#         group_ports.append(easygui.multchoicebox(msg = 'Choose the port for common average reference group {:d}'.format(i+1), choices = tuple(temp_ports))[0])
+#     else:
+#         group_ports.append(easygui.multchoicebox(msg = 'Choose the port for common average reference group {:d}'.format(i+1), choices = tuple(ports))[0])
+#     average_electrodes.append(easygui.multchoicebox(msg = 'Choose the ELECTRODES TO AVERAGE ACROSS in the common average reference group {:d}. Remember to DESELECT the EMG electrodes'.format(i+1), 
+#                                                     choices = num_electrodes[group_ports[-1]]))
+
+#####
 # Ask the user to choose the port number and electrodes for each of the groups
 group_ports = []
 average_electrodes = []
-for i in range(num_groups):
-    group_ports.append(easygui.multchoicebox(msg = 'Choose the port for common average reference group {:d}'.format(i+1), choices = tuple(ports))[0])
-    average_electrodes.append(easygui.multchoicebox(msg = 'Choose the ELECTRODES TO AVERAGE ACROSS in the common average reference group {:d}. Remember to DESELECT the EMG electrodes'.format(i+1), 
-                                                    choices = num_electrodes[group_ports[-1]]))
+#average_electrodes_test = []
+electrode_list1 = ['0', '1', '2', '3', '4', '5', '6', '7', '24', '25', '26', '27', '28', '29', '30', '31']
+electrode_list2 = ['8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
 
+for i in range(num_groups):
+    
+    if len(ports) == 1:
+        temp_ports = ports.copy()
+        temp_ports.append('Add more options')
+        group_ports.append(easygui.multchoicebox(msg = 'Choose the port for common average reference group {:d}'.format(i+1), 
+                                                 choices = temp_ports))
+        #group_ports.append(ports[0])
+        print("Port {} is selected".format(ports[0]))
+    else:
+        group_ports.append(easygui.multchoicebox(msg = 'Choose the port for common average reference group {:d}'.format(i+1), choices = tuple(ports)))
+    all_electrodes = num_electrodes[group_ports[i][0]] #[str(el) for el in range(num_electrodes[group_ports[i][0]])]
+    group_index = easygui.multchoicebox(msg = 'Choose the ELECTRODES TO AVERAGE ACROSS (list1[0-7, 24-31]; list2[8-23]) for group {:d}'.format(i+1), 
+                                     choices = ['list1', 'list2', 'all_electrodes', 'Custom'])
+    if group_index[0] == 'all_electrodes':
+        average_electrodes.append(all_electrodes)
+    elif group_index[0] == 'list1':
+        average_electrodes.append(electrode_list1)
+    elif group_index[0] == 'list2':
+        average_electrodes.append(electrode_list2)
+    elif group_index[0] == 'Custom':
+        average_electrodes.append(easygui.multchoicebox(msg = 'Choose the ELECTRODES TO AVERAGE ACROSS in the common average reference group {:d}.'.format(i+1),
+                                                        choices = all_electrodes)) #([el for el in range(num_electrodes)])))
+####
 
 # Get the emg electrode ports and channel numbers from the user
 # If only one amplifier port was used in the experiment, that's the emg_port. Else ask the user to specify
