@@ -1,11 +1,14 @@
-# Post processing cleanup of the mess of files created by emg_local_BSA_execute.py. All the output files will be saved to p (named by tastes) and omega in the hdf5 file under the node emg_BSA_results
+"""
+Post processing cleanup of the mess of files created by emg_local_BSA_execute.py.
+All the output files will be saved to p (named by tastes) and omega in the hdf5 file under the node emg_BSA_results
 
+"""
 # Import stuff
 import numpy as np
 import easygui
 import os
 import tables
-
+    
 # Ask the user to navigate to the directory that hosts the emg_data, and change to it
 dir_name = easygui.diropenbox()
 os.chdir(dir_name)
