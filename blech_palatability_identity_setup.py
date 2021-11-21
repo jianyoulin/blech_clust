@@ -11,7 +11,7 @@ from scipy.stats import pearsonr
 from scipy.stats import f_oneway
 from scipy.spatial.distance import cdist
 from scipy.stats import ttest_ind
-from scipy.misc import comb
+from scipy.special import comb
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.model_selection import LeavePOut
 from sklearn.model_selection import StratifiedShuffleSplit
