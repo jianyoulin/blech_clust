@@ -57,7 +57,8 @@ os.chdir(dir_name)
 
 # Make directory to store the PSTH plots. Delete and remake the directory if it exists
 try:
-	os.system('rm -r '+'./overlay_PSTH')
+    shutil.rmtree('./overlay_PSTH')
+	#os.system('rm -r '+'./overlay_PSTH')
 except:
 	pass
 os.mkdir('./overlay_PSTH')
