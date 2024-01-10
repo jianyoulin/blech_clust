@@ -4,40 +4,18 @@ import os
 import tables
 import sys
 import numpy as np
+import pandas as pd
 import multiprocessing
+from pathlib import Path
 
 # Necessary blech_clust modules
 import read_file
 
-# Get name of directory with the data files
-try: # Read root_data_dir.txt, and cd to that directory
-    f = open('root_data_dir.dir', 'r')
-    dir_name = []
-    for line in f.readlines():
-        dir_name.append(line)
-    f.close()
-    dir_name = easygui.diropenbox(msg='Select data folder', default = dir_name[0][:-1])
-except:
-    dir_name = easygui.diropenbox(msg='Select data folder') # "E:\testing_hdf5s\JY07_Clustering" #
-    # Check with user to see if the right ports, inputs and sampling rate were identified. Screw user if something was wrong, and terminate blech_clust
-    check = easygui.ynbox(msg = 'Reset Root of the Data Directory?', title = "Yes for setting; No if you don't know what to do")
-    # Go ahead only if the user approves by saying yes
-    if check:
-        sep = os.path.sep
-        path_elems = dir_name.split(sep)
-        path_ = dir_name
-        path_list = [dir_name]
-        for i in range(len(path_elems)-2):
-            path_ = os.path.split(path_)[0]
-            path_list.append(path_)
-    # Now get the emg channel numbers, and convert them to integers
-    set_dir = easygui.multchoicebox(msg = 'Choose the root directory', 
-                                    choices = path_list)
-    # Dump the directory name where blech_process has to cd
-    f = open('root_data_dir.dir', 'w')
-    print(set_dir[0], file=f)
-    f.close()
+# get path for blech_clust folder
+blech_clust_dir = os.getcwd()
 
+# Get name of directory with the data files
+dir_name = '/mnt/g/testing_hdf5s/env_Data_testing_blech_clust/JK14_20230916_Sacc_230916_104702' # easygui.diropenbox() # "E:\testing_hdf5s\JY07_Clustering" #
 
 # Get the type of data files (.rhd or .dat)
 file_type = easygui.multchoicebox(msg = 'What type of files am I dealing with?', 
@@ -49,11 +27,12 @@ os.chdir(dir_name)
 # Get the names of all files in this directory
 file_list = os.listdir('./')
 
-# Grab directory name to create the name of the hdf5 file
-hdf5_name = str.split(dir_name, '/')
+# # Grab directory name to create the name of the hdf5 file
+# hdf5_name = str.split(dir_name, '/')
 
 # Create hdf5 file, and make groups for raw data, raw emgs, digital outputs and digital inputs, and close
-hf5 = tables.open_file(hdf5_name[-1]+'.h5', 'w', title = hdf5_name[-1])
+# hf5 = tables.open_file(hdf5_name[-1]+'.h5', 'w', title = hdf5_name[-1])
+hf5 = tables.open_file(Path(dir_name).name +'.h5', 'w', title = Path(dir_name).name)
 hf5.create_group('/', 'raw')
 hf5.create_group('/', 'raw_emg')
 hf5.create_group('/', 'digital_in')
@@ -75,7 +54,7 @@ print("Used Ports: {}".format(ports))
 # Pull out the digital input channels used, and convert them to integers
 dig_in = list(set(f[10:12] for f in file_list if f[:9] == 'board-DIN'))
 for i in range(len(dig_in)):
-    print(dig_in[i][0]) 
+    print(dig_in[i][:]) 
     dig_in[i] = int(dig_in[i][:])
 dig_in.sort()
 print("Used dig-ins: {}".format(dig_in))
@@ -122,12 +101,18 @@ if emg_channels is None:
 emg_channels.sort()
 print('EMG channels', emg_channels)
 
+# assuming EMG channels from the same headstage
+# adjusting e_channels by removing emg channels
+for p in emg_port:
+    for c in emg_channels:
+        e_channels[p].remove(c)
+
 # Create arrays for each electrode
-read_file.create_hdf_arrays(hdf5_name[-1]+'.h5', ports, dig_in, e_channels, emg_port, emg_channels)
+read_file.create_hdf_arrays(Path(dir_name).name+'.h5', ports, dig_in, e_channels, emg_port, emg_channels)
 
 # Read data files, and append to electrode arrays
 if file_type[0] == 'one file per channel':
-    read_file.read_files(hdf5_name[-1]+'.h5', ports, dig_in, e_channels, emg_port, emg_channels)
+    read_file.read_files(Path(dir_name).name+'.h5', ports, dig_in, e_channels, emg_port, emg_channels)
 else:
     print("Only files structured as one file per channel can be read at this time...")
     sys.exit() # Terminate blech_clust if something else has been used - to be changed later
@@ -157,7 +142,7 @@ spike_snapshot = easygui.multenterbox(msg = "Fill in the size of the spike snaps
                                       values = [0.5, 1])
 
 # And print them to a blech_params file
-f = open(hdf5_name[-1]+'.params', 'w')
+f = open(Path(dir_name).name+'.params', 'w')
 for i in clustering_params:
     print(i, file=f)
 for i in data_params:
@@ -169,18 +154,58 @@ for i in spike_snapshot:
 print(sampling_rate, file=f)
 f.close()
 
+# saving channel maps
+temp_channels = {}
+for port in ports:
+    temp_channels[port] = list(set(int(f[6:9]) for f in file_list if f[:5] == 'amp-{}'.format(port)))
+
+channel_map_list = []
+for p in ports:
+    for e, eds in enumerate(temp_channels[p]):
+        if (p == emg_port[0]) and (eds in emg_channels): 
+            channel_map_list.append(','.join([p, str(e), str(eds), 'EMG']))
+        else:
+            channel_map_list.append(','.join([p, str(e), str(eds), 'Electrode']))
+
+areas = easygui.multenterbox(msg = 'Fill in areas the electrode is recording)',
+                             fields = channel_map_list,
+                             values = ['GC' if 'EMG' not in channel else 'Muscle' \
+                                       for channel in channel_map_list])
+
+channel_map_dict = {'headstage_port':[], 'amp_ch':[], 'electrode_type':[], 
+                    'electrode_num': [], 'area':[]}
+def fill_dict(map, p, e, eds, e_type, area):
+    map['headstage_port'].append(p)
+    map['amp_ch'].append(e)
+    map['electrode_type'].append(e_type)
+    map['electrode_num'].append(eds)
+    map['area'].append(area)
+
+for p in ports:
+    for e, eds in enumerate(temp_channels[p]):
+        if (p == emg_port[0]) and (eds in emg_channels):
+            fill_dict(channel_map_dict, p, e, eds, 'EMG', areas[e])
+        else:
+            fill_dict(channel_map_dict, p, e, eds, 'Electrode', areas[e])
+channel_map_df = pd.DataFrame(channel_map_dict)
+# save to data dir
+channel_map_df.to_csv(os.path.join(dir_name, 'channel_map.csv'))
+
+
+
+
 # Make a directory for dumping files talking about memory usage in blech_process.py
 os.mkdir('memory_monitor_clustering')
 
 # Ask for the HPC queue to use - was in previous version, now just use all.q
-clustering = easygui.multchoicebox(msg = 'Which method do you want to use for clustering waveforms?', choices = ('UMAP', 'PCA'))
+clustering = easygui.multchoicebox(msg = 'Which method do you want to use for clustering waveforms?', choices = ('PCA', 'UMAP'))
 
 # Grab Brandeis unet username
 username = easygui.multenterbox(msg = 'Enter your Brandeis/Jetstream/personal computer id', fields = ['unet username'])
 
 # Dump shell file for running array job on the user's blech_clust folder on the desktop
 try:
-    os.chdir('/home/%s/Desktop/blech_clust' % username[0])
+    os.chdir(blech_clust_dir) #'/home/%s/Desktop/blech_clust' % username[0])
 except:
     os.chdir('/mnt/c/Users/jiany/Desktop/blech_clust')
 
@@ -193,13 +218,29 @@ f.close()
 
 # Dump shell file(s) for running GNU parallel job on the user's blech_clust folder on the desktop
 # First get number of CPUs - parallel be asked to run num_cpu-1 threads in parallel
-num_cpu = multiprocessing.cpu_count()
+num_cpu = multiprocessing.cpu_count()//2 # number of cpu cores to be used in clustering
 # Then produce the file generating the parallel command
-n_electrodes = 0
-for port in ports:
-    n_electrodes = n_electrodes + len(e_channels[port])
+
+# n_electrodes = 0
+# for port in ports:
+#     n_electrodes = n_electrodes + len(e_channels[port])
+
+# f = open('blech_clust_jetstream_parallel.sh', 'w')
+# # print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed --joblog {:s}/results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".format(int(num_cpu)-1, dir_name, int(n_electrodes-len(emg_channels))), file = f)
+
+# print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed --joblog {:s}{}results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".format(int(num_cpu), dir_name, os.path.sep, int(n_electrodes-len(emg_channels))), file = f)
+
+# print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed "\
+#       "--joblog {:s}{}results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".\
+#         format(int(num_cpu), dir_name, os.path.sep, int(n_electrodes-len(emg_channels))), file = f)
+# f.close()
+all_electrodes = np.concatenate(tuple(e_channels[k] for k in e_channels.keys()))
+
 f = open('blech_clust_jetstream_parallel.sh', 'w')
-print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed --joblog {:s}/results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".format(int(num_cpu)-1, dir_name, int(n_electrodes-len(emg_channels))), file = f)
+print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed "\
+        "--joblog {:s}{}results.log bash blech_clust_jetstream_parallel1.sh ::: {{{}}}"\
+        .format(num_cpu, dir_name, os.path.sep, ",".join([str(x) for x in all_electrodes]))
+        , file = f)
 f.close()
 
 # Then produce the file that runs blech_process.py
@@ -208,8 +249,21 @@ print("export OMP_NUM_THREADS=1", file = f)
 print("python blech_process.py $1 {}".format(clustering[0]), file = f)
 f.close()
 
+# produce bash file to run umap_spike_scatter and parallelize them
+f = open('bash_umap_spike_scatter.sh', 'w')
+print("parallel -k -j {:d} --load 100% --progress --memfree 4G --retry-failed "\
+"python umap_spike_scatter_parallel.py ::: {{{}}}"\
+    .format(num_cpu, ",".join([str(x) for x in all_electrodes])),
+ file = f)
+f.close()
+
 # Dump the directory name where blech_process has to cd
 f = open('blech.dir', 'w')
+print(dir_name, file=f)
+f.close()
+
+# Dump the directory name where umap_scatter has to cd
+f = open('umap_dir.txt', 'w')
 print(dir_name, file=f)
 f.close()
 

@@ -9,6 +9,7 @@ def create_hdf_arrays(file_name, ports, dig_in, e_channels, emg_port, emg_channe
     n_electrodes = 0
     for port in ports:
         n_electrodes = n_electrodes + len(e_channels[port])
+    electrodes = np.concatenate(tuple(e_channels[k] for k in e_channels.keys()))
     #n_electrodes = [e_channelslen(ports)*32
     atom = tables.IntAtom()
     
@@ -17,7 +18,7 @@ def create_hdf_arrays(file_name, ports, dig_in, e_channels, emg_port, emg_channe
         dig_inputs = hf5.create_earray('/digital_in', 'dig_in_%i' % i, atom, (0,))
 
     # Create arrays for neural electrodes, and make directories to store stuff coming out from blech_process
-    for i in range(n_electrodes - len(emg_channels)):
+    for i in electrodes: #range(n_electrodes - len(emg_channels)):
         el = hf5.create_earray('/raw', 'electrode%i' % i, atom, (0,))
         
     # Create arrays for EMG electrodes
@@ -40,14 +41,24 @@ def read_files(hdf5_name, ports, dig_in, e_channels, emg_port, emg_channels):
     emg_counter = 0
     el_counter = 0
     for port in ports:
-        for channel in range(len(e_channels[port])):
+        for channel in e_channels[port]: 
             data = np.fromfile('amp-' + port + '-%03d'%channel + '.dat', dtype = np.dtype('int16'))
-            if port == emg_port[0] and channel in emg_channels:
-                exec("hf5.root.raw_emg.emg%i.append(data[:])" % emg_counter)
-                emg_counter += 1
-            else:
-                exec("hf5.root.raw.electrode%i.append(data[:])" % el_counter)
-                el_counter += 1
+            exec("hf5.root.raw.electrode%i.append(data[:])" % channel)
+
+        if port == emg_port:
+            for i, channel in enumerate(emg_channels): 
+                data = np.fromfile('amp-' + port + '-%03d'%channel + '.dat', dtype = np.dtype('int16'))
+                exec("hf5.root.raw_emg.emg%i.append(data[:])" % i)
+    
+    # for port in ports:
+    #     for channel in range(len(e_channels[port])):
+    #         data = np.fromfile('amp-' + port + '-%03d'%channel + '.dat', dtype = np.dtype('int16'))
+    #         if port == emg_port[0] and channel in emg_channels:
+    #             exec("hf5.root.raw_emg.emg%i.append(data[:])" % emg_counter)
+    #             emg_counter += 1
+    #         else:
+    #             exec("hf5.root.raw.electrode%i.append(data[:])" % el_counter)
+    #             el_counter += 1
         hf5.flush()
 
     hf5.close()
