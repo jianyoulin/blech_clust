@@ -24,9 +24,10 @@ def memory_usage_resource():
 
 def report_usage(label="", logfile = sys.stderr):
     myfile , myfunction , myline = get_location()
-    maxmem = memory_usage_resource()
+    #maxmem = memory_usage_resource()
+    #maxmem = memory_usage_resource()
     current_mem  = memory_usage_psutil()
     print ( "Location %s: file = %s , function = %s , line = %s" %   (label , myfile , myfunction , myline) , file = logfile)
-    print ( "\trss_mem = %lf MB ,vms_mem = %lf MB ,shared_mem = %lf MB, max_mem = %lf MB" %  (  current_mem + ( maxmem, )) , file = logfile )
+#    print ( "\trss_mem = %lf MB ,vms_mem = %lf MB ,shared_mem = %lf MB, max_mem = %lf MB" %  (  current_mem + ( maxmem, )) , file = logfile )
     return
 
