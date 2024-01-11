@@ -1,2 +1,6 @@
 *.dir
 *.sh
+umap_dir.txt
+
+# ignore files in folder
+temp_backup/

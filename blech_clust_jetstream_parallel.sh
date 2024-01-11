@@ -1,1 +1,1 @@
-parallel -k -j 31 --noswap --load 100% --progress --memfree 4G --retry-failed --joblog /mnt/f/Experiment_Umami/test_recording/LL3_60min_SNMX_210707_133510/results.log bash blech_clust_jetstream_parallel1.sh ::: {1..32}
+parallel -k -j 4 --noswap --load 100% --progress --memfree 4G --retry-failed --joblog /mnt/g/testing_hdf5s/env_Data_testing_blech_clust/JK14_20230916_Sacc_230916_104702/results.log bash blech_clust_jetstream_parallel1.sh ::: {0,1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}
