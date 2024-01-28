@@ -10,7 +10,11 @@ import easygui
 from tqdm import tqdm
 
 # Ask for the directory where the hdf5 file sits, and change to that directory
-dir_name = '/mnt/g/testing_hdf5s/env_Data_testing_blech_clust/JK14_20230916_Sacc_230916_104702' # easygui.diropenbox()
+try:
+    dir_name = sys.argv[1]
+except:
+    dir_name = easygui.diropenbox('Select the dir path where data are saved')
+
 os.chdir(dir_name)
 
 # Look for the hdf5 file in the directory

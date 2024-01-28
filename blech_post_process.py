@@ -23,12 +23,12 @@ import pylab as plt
 from sklearn.mixture import GaussianMixture
 import blech_waveforms_datashader
 
-# Get directory where the hdf5 file sits, and change to that directory
-dir_name = '/mnt/g/testing_hdf5s/env_Data_testing_blech_clust/JK14_20230916_Sacc_230916_104702' #easygui.diropenbox()
+# Get name of directory with the data files
 try:
-    os.chdir(dir_name)
+    dir_name = sys.argv[1]
 except:
-    dir_name = easygui.diropenbox()
+    dir_name = easygui.diropenbox('Select the dir path where data are saved')
+os.chdir(dir_name)
 
 # Clean up the memory monitor files, pass if clean up has been done already
 if not os.path.exists('./memory_monitor_clustering/memory_usage.txt'):
