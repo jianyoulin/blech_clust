@@ -14,6 +14,7 @@ also save a pickle file with details of unit description
 """
 
 import os
+import sys
 import tables
 import numpy as np
 import easygui
