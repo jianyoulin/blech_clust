@@ -15,6 +15,7 @@ from scipy import linalg
 # https://github.com/steelersd/memory_monitor/tree/master
 import memory_monitor as mm
 import blech_waveforms_datashader
+from pathlib import Path
 
 # Read blech.dir, and cd to that directory
 f = open('blech.dir', 'r')
@@ -22,7 +23,7 @@ dir_name = []
 for line in f.readlines():
 	dir_name.append(line)
 f.close()
-os.chdir(dir_name[0][:-1])
+os.chdir(dir_name[0].rstrip())
 
 # Pull out SGE_TASK_ID # - this will be the electrode number to be looked at. 
 try:
