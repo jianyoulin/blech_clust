@@ -216,7 +216,7 @@ f = open('blech_clust.sh', 'w')
 print("export OMP_NUM_THREADS=1", file = f)
 print("cd {}".format(os.getcwd()), file=f)
 #print("cd /home/%s/Desktop/blech_clust" % username[0], file=f)
-print("python blech_process_umap.py", file=f)
+print("python blech_process.py", file=f)
 f.close()
 
 # Dump shell file(s) for running GNU parallel job on the user's blech_clust folder on the desktop
