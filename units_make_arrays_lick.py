@@ -17,7 +17,7 @@ import shutil
 import pickle
 
 read = True
-if not read:
+if not read: # skip if the digin signals have been read into hdf5 file
     # Get name of directory with the data files and Change to that directory
     dir_name = easygui.diropenbox()
     os.chdir(dir_name)
@@ -123,15 +123,15 @@ trial_start_points, trial_end_points = [], [] # for each trial on and off time
 #start_pointss, end_pointss = [], [] # for each taste delivery on and off time
 #trial_start_pointss, trial_end_pointss = [], [] # for each trial on and off time
 for on_times in dig_on: #[:len(digin_tastes)]:
-    
     #####
     if len(on_times) > 3:
         on_times_diff = np.diff(on_times)
+        # for each burst of on and off in the digins
         starts = on_times[np.where(on_times_diff > int(sampling_rate/1000))[0]+1]
         starts = np.insert(starts, 0, on_times[0])
         ends = on_times[np.where(on_times_diff > int(sampling_rate/1000))[0]]
         ends = np.insert(ends, -1, on_times[-1])
-    
+        # on and off for each trials (with longer delays)
         t_starts = on_times[np.where(on_times_diff > 15*sampling_rate)[0]+1]
         t_starts = np.insert(t_starts, 0, on_times[0])
         t_ends = on_times[np.where(on_times_diff > 15*sampling_rate)[0]]
