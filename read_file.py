@@ -63,6 +63,27 @@ def read_files(hdf5_name, ports, dig_in, e_channels, emg_port, emg_channels):
 
     hf5.close()
                 
+# Create EArrays in hdf5 file 
+def create_hdf_digin_arrays(file_name, dig_in):
+    hf5 = tables.open_file(file_name, 'r+')
+    atom = tables.IntAtom()
     
+    # Create arrays for digital inputs
+    for i in dig_in:
+        dig_inputs = hf5.create_earray('/digital_in', 'dig_in_%i' % i, atom, (0,))
 
+    # Close the hdf5 file 
+    hf5.close()     
+
+# Read files into hdf5 arrays - the format should be 'one file per channel'
+def read_digin_files(hdf5_name, dig_in):
+    hf5 = tables.open_file(hdf5_name, 'r+')
+
+    # Read digital inputs, and append to the respective hdf5 arrays
+    for i in dig_in:
+        inputs = np.fromfile('board-DIN-%02d'%i + '.dat', dtype = np.dtype('uint16'))
+        exec("hf5.root.digital_in.dig_in_"+str(i)+".append(inputs[:])")
+        hf5.flush()
     
+    # Close the hdf5 file
+    hf5.close()    
