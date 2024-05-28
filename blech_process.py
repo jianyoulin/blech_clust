@@ -13,7 +13,7 @@ import matplotlib.cm as cm
 from scipy.spatial.distance import mahalanobis
 from scipy import linalg
 # https://github.com/steelersd/memory_monitor/tree/master
-import memory_monitor as mm
+# import memory_monitor as mm
 import blech_waveforms_datashader
 from pathlib import Path
 
@@ -33,7 +33,8 @@ except:
 	electrode_num = int(sys.argv[1]) # - 1 
 
 # Pull out the method for clustering
-clustering = sys.argv[2]
+clustering = 'PCA' #sys.argv[2]
+print(f'Electrode - {electrode_num}')
 print(clustering)
  
 # Check if the directories for this electrode number exist - if they do, delete them (existence of the directories indicates a job restart on the cluster, so restart afresh)
@@ -310,10 +311,10 @@ for i in range(max_clusters-1):
 		plt.close("all")                
 
 
-# Make file for dumping info about memory usage
-f = open('./memory_monitor_clustering/%i.txt' % electrode_num, 'w')
-print(mm.memory_usage_resource(), file=f)
-f.close()	
+# # Make file for dumping info about memory usage
+# f = open('./memory_monitor_clustering/%i.txt' % electrode_num, 'w')
+# print(mm.memory_usage_resource(), file=f)
+# f.close()	
 	
 
 
