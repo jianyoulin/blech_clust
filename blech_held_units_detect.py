@@ -120,6 +120,13 @@ for unit2 in range(len(hf52.root.unit_descriptor[:])):
 
 # Now calculate the inter unit J3 numbers for units of the same type on the same electrode - mark them as held if they're less than the 95th percentile of intra_J3
 # Run through the units on day 1
+# unit features critical for held_unit_analysis
+#unit_info_labels = ['electrode_number', 'fast_spiking', 'regular_spiking', 'single_unit']
+def get_unit_info(all_unit_info, 
+                  unit_info_labels=['electrode_number', 'fast_spiking', 
+                                    'regular_spiking', 'single_unit']):
+    return [all_unit_info[i] for i in unit_info_labels]
+     
 inter_J3 = []
 for unit1 in range(len(hf51.root.unit_descriptor[:])):
     # Only go ahead if this is a single unit
@@ -127,7 +134,9 @@ for unit1 in range(len(hf51.root.unit_descriptor[:])):
         # Run through the units on day 2 and check if it was present (same electrode and unit type)
         for unit2 in range(len(hf52.root.unit_descriptor[:])):
             print(unit1, unit2, len(hf51.root.unit_descriptor[:]), len(hf52.root.unit_descriptor[:]))
-            if hf52.root.unit_descriptor[unit2] == hf51.root.unit_descriptor[unit1]:
+            if get_unit_info(hf52.root.unit_descriptor[unit2]) == \
+               get_unit_info(hf51.root.unit_descriptor[unit1]):
+            # if hf52.root.unit_descriptor[unit2] == hf51.root.unit_descriptor[unit1]:
                 # Load up the waveforms for unit1 and unit2
                 exec("wf_day1 = hf51.root.sorted_units.unit%03d.waveforms[:]" % (unit1))
                 exec("wf_day2 = hf52.root.sorted_units.unit%03d.waveforms[:]" % (unit2))
