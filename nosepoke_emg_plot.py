@@ -1,4 +1,8 @@
+"""
+need to run nosepoke_emg_make_array.py first which save data in HDF5 
+to be used for plotting here
 
+"""
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
