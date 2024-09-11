@@ -265,7 +265,7 @@ else:
     # Then produce the file that runs blech_process.py
     f = open('blech_clust_jetstream_parallel1.sh', 'w')
     print("export OMP_NUM_THREADS=1", file = f)
-    print("python blech_process.py $1 {}".format(clustering[0]), file = f)
+    print("python blech_process.py $1 {}".format('PCA'), file = f)
     f.close()
 
     # produce bash file to run umap_spike_scatter and parallelize them
