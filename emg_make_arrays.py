@@ -29,23 +29,55 @@ for node in dig_in_nodes:
 dig_in = np.array(dig_in)
 
 # Get the stimulus delivery times - take the end of the stimulus pulse as the time of delivery
+# dig_on = []
+# for i in range(len(dig_in)):
+# 	dig_on.append(np.where(dig_in[i,:] == 1)[0])
+# change_points = []
+# for on_times in dig_on:
+# 	changes = []
+# 	for j in range(len(on_times) - 1):
+# 		if np.abs(on_times[j] - on_times[j+1]) > 30:
+# 			changes.append(on_times[j])
+# 	try:
+# 		changes.append(on_times[-1]) # append the last trial which will be missed by this method
+# 	except:
+# 		pass # Continue without appending anything if this port wasn't on at all
+# 	change_points.append(changes)	
+
+# # Get the stimulus delivery times - take the end of the stimulus pulse as the time of delivery
 dig_on = []
 for i in range(len(dig_in)):
 	dig_on.append(np.where(dig_in[i,:] == 1)[0])
-change_points = []
+start_points = []
+end_points = []
 for on_times in dig_on:
-	changes = []
-	for j in range(len(on_times) - 1):
-		if np.abs(on_times[j] - on_times[j+1]) > 30:
-			changes.append(on_times[j])
+	start = []
+	end = []
 	try:
-		changes.append(on_times[-1]) # append the last trial which will be missed by this method
+		start.append(on_times[0]) # Get the start of the first trial
 	except:
 		pass # Continue without appending anything if this port wasn't on at all
-	change_points.append(changes)	
-
+	for j in range(len(on_times) - 1):
+		if np.abs(on_times[j] - on_times[j+1]) > 30:
+			end.append(on_times[j])
+			start.append(on_times[j+1])
+	try:
+		end.append(on_times[-1]) # append the last trial which will be missed by this method
+	except:
+		pass # Continue without appending anything if this port wasn't on at all
+	start_points.append(np.array(start))
+	end_points.append(np.array(end))
+    
 # Show the user the number of trials on each digital input channel, and ask them to confirm
-check = easygui.ynbox(msg = 'Digital input channels: ' + str(dig_in_pathname) + '\n' + 'No. of trials: ' + str([len(changes) for changes in change_points]), title = 'Check and confirm the number of trials detected on digital input channels')
+# check = easygui.ynbox(msg = 'Digital input channels: ' + str(dig_in_pathname) + '\n' + 'No. of trials: ' + str([len(changes) for changes in change_points]), title = 'Check and confirm the number of trials detected on digital input channels')
+# # Go ahead only if the user approves by saying yes
+# if check:
+# 	pass
+# else:
+# 	print("Well, if you don't agree, blech_clust can't do much!")
+# 	sys.exit()
+
+check = easygui.ynbox(msg = 'Digital input channels: ' + str(dig_in_pathname) + '\n' + 'No. of trials: ' + str([len(changes) for changes in start_points]), title = 'Check and confirm the number of trials detected on digital input channels')
 # Go ahead only if the user approves by saying yes
 if check:
 	pass
@@ -72,18 +104,32 @@ for node in emg_nodes:
 	emg_pathname.append(node._v_pathname)
 
 # Create a numpy array to store emg data by trials
-emg_data = np.ndarray((len(emg_pathname), len(dig_in_channels), len(change_points[dig_in_channel_nums[0]]), durations[0]+durations[1]))
+# emg_data = np.ndarray((len(emg_pathname), len(dig_in_channels), len(change_points[dig_in_channel_nums[0]]), durations[0]+durations[1]))
+
+emg_data = np.ndarray((len(emg_pathname), len(dig_in_channels), len(start_points[dig_in_channel_nums[0]]), durations[0]+durations[1]))
+
+# # And pull out emg data into this array
+# for i in range(len(emg_pathname)):
+# 	exec("data = hf5.root.raw_emg.%s[:]" % emg_pathname[i].split('/')[-1])
+# 	for j in range(len(dig_in_channels)):
+# 		for k in range(len(change_points[dig_in_channel_nums[j]])):
+# 			raw_emg_data = data[change_points[dig_in_channel_nums[j]][k]-durations[0]*30:change_points[dig_in_channel_nums[j]][k]+durations[1]*30]
+# 			raw_emg_data = 0.195*(raw_emg_data)
+# 			# Downsample the raw data by averaging the 30 samples per millisecond, and assign to emg_data
+#             # emg_data[emg#, n_tastes, n_trials]
+# 			emg_data[i, j, k, :] = np.mean(raw_emg_data.reshape((-1, 30)), axis = 1)
 
 # And pull out emg data into this array
 for i in range(len(emg_pathname)):
 	exec("data = hf5.root.raw_emg.%s[:]" % emg_pathname[i].split('/')[-1])
 	for j in range(len(dig_in_channels)):
-		for k in range(len(change_points[dig_in_channel_nums[j]])):
-			raw_emg_data = data[change_points[dig_in_channel_nums[j]][k]-durations[0]*30:change_points[dig_in_channel_nums[j]][k]+durations[1]*30]
+		for k in range(len(start_points[dig_in_channel_nums[j]])):
+			raw_emg_data = data[start_points[dig_in_channel_nums[j]][k]-durations[0]*30:start_points[dig_in_channel_nums[j]][k]+durations[1]*30]
 			raw_emg_data = 0.195*(raw_emg_data)
 			# Downsample the raw data by averaging the 30 samples per millisecond, and assign to emg_data
+            # emg_data[emg#, n_tastes, n_trials]
 			emg_data[i, j, k, :] = np.mean(raw_emg_data.reshape((-1, 30)), axis = 1)
-
+            
 # Save the emg_data
 np.save('emg_data.npy', emg_data)
 

@@ -1,4 +1,4 @@
-# Subtracts the two emg signals and filters and saves the results.
+ # Subtracts the two emg signals and filters and saves the results.
 
 # Import stuff
 import numpy as np
@@ -11,7 +11,7 @@ dir_name = easygui.diropenbox()
 os.chdir(dir_name)
 
 # Load the data
-emg_data = np.load('emg_data.npy')
+emg_data = np.load('emg_data.npy') # emg_data[emg#, n_tastes, n_trials, time]
 
 # Ask the user for stimulus delivery time in each trial, and convert to an integer
 pre_stim = easygui.multenterbox(msg = 'Enter the pre-stimulus time included in each trial', fields = ['Pre-stimulus time (ms)']) 

@@ -45,7 +45,7 @@ def read_files(hdf5_name, ports, dig_in, e_channels, emg_port, emg_channels):
             data = np.fromfile('amp-' + port + '-%03d'%channel + '.dat', dtype = np.dtype('int16'))
             exec("hf5.root.raw.electrode%i.append(data[:])" % channel)
 
-        if port == emg_port:
+        if port in emg_port:
             for i, channel in enumerate(emg_channels): 
                 data = np.fromfile('amp-' + port + '-%03d'%channel + '.dat', dtype = np.dtype('int16'))
                 exec("hf5.root.raw_emg.emg%i.append(data[:])" % i)
