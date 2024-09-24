@@ -62,6 +62,9 @@ else:
 	sys.exit()
 
 # Ask the user which digital input channels should be used for getting spike train data, and convert the channel numbers into integers for pulling stuff out of change_points
+if len(dig_in_pathname) == 1:
+    dig_in_pathname.append('Do not choose me!')
+    
 dig_in_channels = easygui.multchoicebox(msg = 'Which digital input channels should be used to produce spike train data trial-wise?', choices = ([path for path in dig_in_pathname]))
 dig_in_channel_nums = []
 for i in range(len(dig_in_pathname)):
