@@ -1,6 +1,9 @@
 *.dir
 *.sh
+*.ps1
+.gitignore
 umap_dir.txt
+error_notes.txt
 
 # ignore files in folder
 temp_backup/
