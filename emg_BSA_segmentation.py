@@ -100,6 +100,42 @@ hf5.create_array('/emg_bsa', 'sig_trials', final_sig_trials)
 #hf5.create_array('/ancillary_analysis', 'emg_BSA_results', final_emg_BSA_results)
 np.save('emg_BSA_results.npy', final_emg_BSA_results)
 
+# plot emg bsa gapes probability
+n_lasers, n_tastes, n_trials, n_time = final_gapes.shape
+
+x_ticks = np.arange(n_time)[::1000]
+fig, ax = plt.subplots(1, n_lasers, sharey=True, squeeze=False, figsize=(4*n_lasers, 6))
+for i in range(n_lasers):
+    gapes_conc = np.concatenate([final_gapes[i, t,:,:] for t in range(n_tastes)])
+    ax[0, i].imshow(gapes_conc, origin='lower', aspect='auto')
+    ax[0, i].set_xticks(x_ticks, x_ticks-2000)
+    ax[0, i].set_xlabel('Time from taste delivery (ms)')
+    ax[0, i].set_title(f'Laser_condition {i}')
+    if i == 0:
+        ax[0, i].set_ylabel('All trials')
+fig.suptitle('Gapes')
+plt.tight_layout()
+plt.savefig('./gapes_BSA_probability.png')
+plt.close()
+
+# plot emg bsa licks probability
+n_lasers, n_tastes, n_trials, n_time = final_ltps.shape
+
+x_ticks = np.arange(n_time)[::1000]
+fig, ax = plt.subplots(1, n_lasers, sharey=True, squeeze=False, figsize=(4*n_lasers, 6))
+for i in range(n_lasers):
+    licks_conc = np.concatenate([final_ltps[i, t,:,:] for t in range(n_tastes)])
+    ax[0, i].imshow(licks_conc, origin='lower', aspect='auto')
+    ax[0, i].set_xticks(x_ticks, x_ticks-2000)
+    ax[0, i].set_xlabel('Time from taste delivery (ms)')
+    ax[0, i].set_title(f'Laser_condition {i}')
+    if i == 0:
+        ax[0, i].set_ylabel('Trials')
+fig.suptitle('Licks / LTPs')
+plt.tight_layout()
+plt.savefig('./LTPs_BSA_probability.png')
+plt.close()
+
 hf5.flush()
 
 hf5.close()
