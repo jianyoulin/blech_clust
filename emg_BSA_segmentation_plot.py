@@ -46,19 +46,30 @@ for dir_name in dirs:
 	hf5 = tables.open_file(hdf5_name, 'r')
 
 	# Pull the data from the /ancillary_analysis node
-	unique_lasers.append(hf5.root.ancillary_analysis.laser_combination_d_l[:])
-	gapes.append(hf5.root.ancillary_analysis.gapes[:])
-	ltps.append(hf5.root.ancillary_analysis.ltps[:])
-	sig_trials.append(hf5.root.ancillary_analysis.sig_trials[:])
+	trials = np.load('trials.npy')
+	uni_lasers = np.load('laser_combination_d_l.npy')
+	laser_durs = np.load('laser_durations.npy')
+	num_tastes, num_trials = laser_durs.shape
+	unique_lasers.append(uni_lasers) #hf5.root.ancillary_analysis.laser_combination_d_l[:])
+
+	try:
+		gapes.append(hf5.root.ancillary_analysis.gapes[:])
+		ltps.append(hf5.root.ancillary_analysis.ltps[:])
+		sig_trials.append(hf5.root.ancillary_analysis.sig_trials[:])
+	except:
+		print('load data from emg_bsa node')
+		gapes.append(hf5.root.emg_bsa.gapes[:])
+		ltps.append(hf5.root.emg_bsa.ltps[:])
+		sig_trials.append(hf5.root.emg_bsa.sig_trials[:])
 #	gapes_Li.append(hf5.root.ancillary_analysis.gapes_Li[:])
 #	gape_trials_Li.append(hf5.root.ancillary_analysis.gape_trials_Li[:])
 #	first_gape_Li.append(hf5.root.ancillary_analysis.first_gape_Li[:])
     
 #	emg_BSA_results.append(hf5.root.ancillary_analysis.emg_BSA_results[:])
 	# Reading single values from the hdf5 file seems hard, needs the read() method to be called
-	pre_stim.append(hf5.root.ancillary_analysis.pre_stim.read())
+	pre_stim.append(2000) #hf5.root.ancillary_analysis.pre_stim.read())
 	# Also maintain a counter of the number of trials in the analysis
-	num_trials += hf5.root.ancillary_analysis.gapes.shape[0]
+	num_trials += hf5.root.emg_bsa.gapes.shape[0]
 
 	# Close the hdf5 file
 	hf5.close()

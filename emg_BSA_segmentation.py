@@ -19,13 +19,23 @@ for files in file_list:
 hf5 = tables.open_file(hdf5_name, 'r+')
 
 # Grab the nodes for the available tastes
-trains_dig_in = hf5.list_nodes('/spike_trains')
-num_trials = trains_dig_in[0].spike_array.shape[0]
-num_tastes = len(trains_dig_in)
+try:
+    trains_dig_in = hf5.list_nodes('/spike_trains')
+    num_trials = trains_dig_in[0].spike_array.shape[0]
+    num_tastes = len(trains_dig_in)
+except:
+    print('This is a no-ephys recording, \nretrieve trial info from numpy npy files')
+    
 
 # Load the unique laser duration/lag combos and the trials that correspond to them from the ancillary analysis node
-trials = hf5.root.ancillary_analysis.trials[:]
-unique_lasers = hf5.root.ancillary_analysis.laser_combination_d_l[:]
+try:
+    trials = hf5.root.ancillary_analysis.trials[:]
+    unique_lasers = hf5.root.ancillary_analysis.laser_combination_d_l[:]
+except:
+    trials = np.load('trials.npy')
+    unique_lasers = np.load('laser_combination_d_l.npy')
+    laser_durs = np.load('laser_durations.npy')
+    num_tastes, num_trials = laser_durs.shape
 
 # Ask the user for the pre-stimulus time used
 # pre_stim = easygui.multenterbox(msg = 'Enter the pre-stimulus time for the spike trains', fields = ['Pre stim (ms)'])
@@ -69,17 +79,24 @@ for i in range(len(trials)):
 		final_sig_trials[i, j, :] = sig_trials[trials[i][np.where((trials[i] >= num_trials*j)*(trials[i] < num_trials*(j+1)) == True)]]
 
 
-# Save these arrays to file unde the /ancillary_analysis node
+# Save these arrays to file unde the /emg_analysis node
+# Create an ancillary_analysis group in the hdf5 file, and write these arrays to that group
 try:
-	hf5.remove_node('/ancillary_analysis/gapes')
-	hf5.remove_node('/ancillary_analysis/ltps')
-	hf5.remove_node('/ancillary_analysis/sig_trials')
+	hf5.remove_node('/emg_bsa', recursive = True)
+except:
+	pass
+hf5.create_group('/', 'emg_bsa')
+
+try:
+	hf5.remove_node('/emg_bsa/gapes')
+	hf5.remove_node('/emg_bsa/ltps')
+	hf5.remove_node('/emg_bsa/sig_trials')
 #	hf5.remove_node('/ancillary_analysis/emg_BSA_results')
 except:
 	pass
-hf5.create_array('/ancillary_analysis', 'gapes', final_gapes)
-hf5.create_array('/ancillary_analysis', 'ltps', final_ltps)
-hf5.create_array('/ancillary_analysis', 'sig_trials', final_sig_trials)
+hf5.create_array('/emg_bsa', 'gapes', final_gapes)
+hf5.create_array('/emg_bsa', 'ltps', final_ltps)
+hf5.create_array('/emg_bsa', 'sig_trials', final_sig_trials)
 #hf5.create_array('/ancillary_analysis', 'emg_BSA_results', final_emg_BSA_results)
 np.save('emg_BSA_results.npy', final_emg_BSA_results)
 

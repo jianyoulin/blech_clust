@@ -92,6 +92,14 @@ for i in range(len(dig_in_pathname)):
 	if dig_in_pathname[i] in dig_in_channels:
 		dig_in_channel_nums.append(i)
 
+# Ask the user which digital input channels should be used for conditioning the stimuli channels above (laser channels for instance)
+lasers = easygui.multchoicebox(msg = 'Which digital input channels were used for lasers? Click clear all and continue if you did not use lasers', choices = ([path for path in dig_in_pathname]))
+laser_nums = []
+if lasers:
+	for i in range(len(dig_in_pathname)):
+		if dig_in_pathname[i] in lasers:
+			laser_nums.append(i)
+            
 # Ask the user for the pre and post stimulus durations to be pulled out, and convert to integers
 durations = easygui.multenterbox(msg = 'What are the signal durations pre and post stimulus that you want to pull out', fields = ['Pre stimulus (ms)', 'Post stimulus (ms)'])
 for i in range(len(durations)):
@@ -132,6 +140,80 @@ for i in range(len(emg_pathname)):
             
 # Save the emg_data
 np.save('emg_data.npy', emg_data)
+
+# Make conditional stimulus array for this digital input if lasers were used
+
+if laser_nums:
+    laser_durs, laser_onsets = [], []
+    n_lasers = []
+    for i in range(len(dig_in_channels)):
+        cond_array = np.zeros(len(start_points[dig_in_channel_nums[i]]))
+        laser_start = np.zeros(len(start_points[dig_in_channel_nums[i]]))
+        # Also make an array to note down the firing of the lasers one by one - for experiments where only 1 laser was fired at a time. This has 3 sorts of laser on conditions - each laser on alone, and then both on together
+        laser_single = np.zeros((len(start_points[dig_in_channel_nums[i]]), 2))
+        for j in range(len(start_points[dig_in_channel_nums[i]])):
+            # Skip the trial if the headstage fell off before it - mark these trials by -1
+    #        if start_points[dig_in_channel_nums[i]][j] >= expt_end_time:
+    #            cond_array[j] = -1
+            # Else run through the lasers and check if the lasers went off within 5 secs of the stimulus delivery time
+            for laser in range(len(laser_nums)):
+                on_trial = np.where(np.abs(start_points[laser_nums[laser]] - end_points[dig_in_channel_nums[i]][j]) <= 5*30000)[0]
+                if len(on_trial) > 0:
+                    # Mark this laser appropriately in the laser_single array
+                    laser_single[j, laser] = 1.0
+                    # If the lasers did go off around stimulus delivery, get the duration and start time in ms (from end of taste delivery) of the laser trial (as a multiple of 10 - so 53 gets rounded off to 50)
+                    cond_array[j] = 10*int((end_points[laser_nums[laser]][on_trial][0] - \
+                                            start_points[laser_nums[laser]][on_trial][0])/300)
+                    
+                    laser_start[j] = 10*int((start_points[laser_nums[laser]][on_trial][0] - \
+                                             end_points[dig_in_channel_nums[i]][j])/300)
+        laser_durs.append(cond_array)
+        laser_onsets.append(laser_start)
+        n_lasers.append(laser_single)
+    # Write the conditional stimulus duration array to the hdf5 file
+    np.save('laser_durations.npy', np.array(laser_durs))
+    np.save('laser_onset_lag.npy', np.array(laser_onsets))
+    np.save('on_laser.npy', np.array(n_lasers))
+    print(np.array(laser_durs).shape)
+
+# gather trial information for emg_BSA_segmentation
+# First pull out the unique laser(duration,lag) combinations - these are the same irrespective of the unit and time
+num_trials = np.array(laser_durs).shape[1]
+num_units = 1
+num_tastes = np.array(laser_durs).shape[0]
+time = durations[0] + durations[1]
+params = [250, 25]
+
+laser = np.empty(shape = (int((time - params[0])/params[1]) + 1, num_units, num_tastes*num_trials, 2), dtype = float)
+print(f'{laser.shape=}')
+
+# Now fill in the responses and laser (duration,lag) tuples
+for i in range(0, time - params[0] + params[1], params[1]):
+	for j in range(num_units):
+		for k in range(num_tastes):
+			# If the lasers were used, get the appropriate durations and lags. Else assign zeros to both
+			try:
+				laser[int(i/params[1]), j, num_trials*k:num_trials*(k+1)] = np.vstack((laser_durs[k], laser_onsets[k])).T
+			except:
+				print('except')
+				laser[int(i/params[1]), j, num_trials*k:num_trials*(k+1)] = np.zeros((num_trials, 2))
+			
+
+
+# unique_lasers = np.vstack({tuple(row) for row in laser[0, 0, :, :]})
+unique_lasers = np.vstack([laser[0, 0, row, :] for row in range(laser.shape[2])])
+#unique_lasers = unique_lasers[unique_lasers[:, 0].argsort(), :]
+#unique_lasers = unique_lasers[unique_lasers[:, 1].argsort(), :]
+unique_lasers = np.unique(unique_lasers_tup, axis=0)
+# Now get the sets of trials with these unique duration and lag combinations
+trials = []
+for i in range(len(unique_lasers)):
+	this_trials = [j for j in range(laser.shape[2]) if np.array_equal(laser[0, 0, j, :], unique_lasers[i, :])]
+	trials.append(this_trials)
+trials = np.array(trials)
+np.save('trials.npy', trials)
+np.save('laser_combination_d_l.npy', unique_lasers)
+
 
 hf5.close()
 			
