@@ -183,7 +183,7 @@ def plot_waveforms(spike_waveforms, ISI1, ISI2, cluster = -1): #, fig_title=None
     ax.set_title(f"Split Cluster {cluster}: total waveforms = {spike_waveforms.shape[0]} "+ \
             f"\n2ms ISI violations={round(ISI2,2)}% percent "+ \
             f"\n1ms ISI violations={round(ISI1,2)}%")
-    plt.show()
+    # plt.show()
     return ax
 
 def ISI(spike_times):
@@ -202,6 +202,7 @@ def confirm_unit(spike_waveforms, spike_times, cluster=-1, check=False):
 
     violations1, violations2 = ISI(spike_times)
     ax = plot_waveforms(spike_waveforms, violations1, violations2, cluster = cluster)
+    plt.show()
 
     # Warn the user about the frequency of ISI violations in the merged unit
     if check:
@@ -315,7 +316,7 @@ def sorting(spike_waveforms, spike_times, pca_slices, energy, amplitudes, max_un
             print("Solution did not converge - try again with higher number of iterations or "+ \
                   "lower convergence criterion")
             continue
-
+        plt.show()
         # Ask the user for the split clusters they want to choose
         chosen_split = easygui.multchoicebox(msg = 'Which split clusters do you want to choose? '+ \
                                                    'Hit cancel to exit', 
