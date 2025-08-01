@@ -27,11 +27,11 @@ blech_clust_dir = os.getcwd()
 # Get name of directory with the data files
 try:
     dir_name = sys.argv[1]
-    if dir_name == '-f':
+    if '-f' in dir_name:
         dir_name = easygui.diropenbox('Select the dir path where data are saved')
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
-
+# dir_name = '/media/jianyoulin/blech_ephys_backup/Experiment_7_EMG/MT_EMGs_Licking/MT05_S2_VEH_250715_114644/'
 # Change to that directory
 os.chdir(dir_name)
 
@@ -56,7 +56,8 @@ digin_signals = easygui.multenterbox(msg = 'Fill in what signals feeding into ea
 print(f'{digin_nums = }')
 print(f'{digin_signals = }')
 # And print them to a blech_params file
-f = open(Path(dir_name).name+'_digin_information.txt', 'w')
+digin_info_path = os.path.join(dir_name, 'digin_info.txt')
+f = open(digin_info_path, 'w')
 for i, j in enumerate(digin_signals):
     print(f'dig_in_{digin_nums[i]}:{j}', file=f)
 f.close()
@@ -92,7 +93,7 @@ dig_in = np.array(dig_in)
 # Get the times for taste delivery, lick, cue - take the start of the stimulus pulse as the time of delivery
 dig_on = []
 for i in range(dig_in.shape[0]): # digin 9,11,12,13 are led cue, nose_pokes, position2_cue, position6_cue array
-	dig_on.append(np.where(dig_in[i,:] == 1)[0])
+    dig_on.append(np.where(dig_in[i,:] == 1)[0])
 
 start_points, end_points = [], [] # for each taste delivery on and off time
 trial_start_points, trial_end_points = [], [] # for each trial on and off time
@@ -111,6 +112,7 @@ for on_times in dig_on: #[:len(digin_tastes)]:
         t_starts = np.insert(t_starts, 0, on_times[0])
         t_ends = on_times[np.where(on_times_diff > 15*sampling_rate)[0]]
         t_ends = np.append(t_ends, on_times[-1])
+        
     else:
         starts, ends = np.array([0]), np.array([0])
         t_starts, t_ends = np.array([0]), np.array([0])
@@ -122,13 +124,13 @@ for on_times in dig_on: #[:len(digin_tastes)]:
     trial_end_points.append(np.array(t_ends))
     print(trial_end_points[-1])
 
+print(f'{len(trial_start_points[0])}')
+# # read in experiment info
+# f = open(json_file)
+# params = json.load(f)
+# trial_list = params['trial_list']
 
-# read in experiment info
-f = open(json_file)
-params = json.load(f)
-trial_list = params['trial_list']
-
-max_trial_dur = params['max_lick_time'] # np.max(np.array(digin_trial_times))
+max_trial_dur =30# params['max_lick_time'] # np.max(np.array(digin_trial_times))
 # Ask the user for the pre and post stimulus durations to be pulled out, and convert to integers
 duration_ = easygui.multenterbox(msg = 'What are the signal durations pre stimulus that you want to pull out', 
                                  fields = ['Pre trial (ms)', 'post trial (ms)'],
@@ -139,9 +141,9 @@ pre_trial, post_trial = int(duration_[0]), int(duration_[1])
 # Arange nose poke and touch signal aligning the cue delivery (trial starting) time
 # Delete the response_train node in the hdf5 file if it exists, and then create it
 try:
-	hf5.remove_node('/nosepoke_trains', recursive = True)
+    hf5.remove_node('/nosepoke_trains', recursive = True)
 except:
-	pass
+    pass
 hf5.create_group('/', 'nosepoke_trains')
 
 # Then create nose poke array for each trial 
@@ -189,13 +191,48 @@ for i in trial_channels:
     nosepoke_array = hf5.create_array(f'/nosepoke_trains/', f'dig_in_{digin_nums[i]}', nosepoke_train)
     hf5.flush()
 
+# if single trial experiment, also save the nosepoke using fixed trial length
+# to parse EMG and nose poke signals
+if len(trial_start_points[0]) == 1:
+    try:
+        hf5.remove_node('/nosepoke_10sTrial_trains', recursive = True)
+    except:
+        pass
+    hf5.create_group('/', 'nosepoke_10sTrial_trains')
+    
+    trial_time = 10
+    trial_dur = trial_time * 1000 * 30
+    total_length = np.sum(dig_in[2,:])
+
+    spout_pokes_10sec = {}
+    for i in trial_channels:
+        bins = np.arange(trial_start_points[i][0], total_length, trial_dur)
+        spout_pokes_10sec[f'dig_in_{digin_nums[i]}'] = []
+
+        # digin_11, 2nd list of start_points list
+        for t in range(len(bins)-1): #trial in range(len(trial_start_points[i])): # number of cue presented
+            cue_dur = trial_time * 1000
+            nosepokes = np.zeros((cue_dur))
+            # Get the lick times around the start of taste delivery
+            poke_times = np.where((start_points[1][:] <= bins[t+1])* \
+                                  (start_points[1][:] >= bins[t]))[0]
+            poke_times = start_points[1][poke_times]            
+            poke_times = poke_times - bins[t]
+            poke_times = (poke_times/int(sampling_rate/1000)).astype(int)            
+            nosepokes[poke_times] = 1
+            spout_pokes_10sec[f'dig_in_{digin_nums[i]}'].append(nosepokes) 
+        nosepoke_train = padding_zeros(spout_pokes_10sec[f'dig_in_{digin_nums[i]}'])    
+        print(f'nosepoke array shape = {nosepoke_train.shape}')
+        nosepoke_array = hf5.create_array(f'/nosepoke_10sTrial_trains/', f'dig_in_{digin_nums[i]}', nosepoke_train)
+        hf5.flush()
+
 # obtain durations for response 
 # nose poke: how long the infared beam was interupted by tongue
 # lick: how long the spout was touched by tongue
 try:
-	hf5.remove_node('/nosepoke_lengths', recursive = True)
+    hf5.remove_node('/nosepoke_lengths', recursive = True)
 except:
-	pass
+    pass
 hf5.create_group('/', 'nosepoke_lengths')
 
 pokes = dig_in[1, :] # nosepoke digin signal
@@ -218,9 +255,9 @@ for i in trial_channels: # digin channels used to trial alignment
 
 # And pull out emg data into this array
 try:
-	hf5.remove_node('/emg_data', recursive = True)
+    hf5.remove_node('/emg_data', recursive = True)
 except:
-	pass
+    pass
 hf5.create_group('/', 'emg_data')
 
 # Grab the names of the arrays containing emg recordings
@@ -243,9 +280,9 @@ for i in range(len(emg_pathname)): # for each emg channel
             te = trial_end_points[channel][trial]
             # raw_emg_data = data[ts:te] #start_points[dig_in_channel_nums[j]][k]-durations[0]*30:start_points[dig_in_channel_nums[j]][k]+durations[1]*30]
             raw_emg_data = 0.195*(data[ts:te]) # *0.195 so to convert to microVolt
-			# Downsample the raw data by averaging the 30 samples per millisecond, and assign to emg_data
+            # Downsample the raw data by averaging the 30 samples per millisecond, and assign to emg_data
             # emg_data[emg#, n_tastes, n_trials]
-			#emg_data[i, j, k, :] = np.mean(raw_emg_data.reshape((-1, 30)), axis = 1)
+            #emg_data[i, j, k, :] = np.mean(raw_emg_data.reshape((-1, 30)), axis = 1)
             end = len(raw_emg_data) - len(raw_emg_data)%30 # 
             emg_traces.append(np.mean(raw_emg_data[:end].reshape((-1, 30)), axis = 1))
         emgs.append(padding_zeros(emg_traces))
@@ -253,7 +290,36 @@ for i in range(len(emg_pathname)): # for each emg channel
         print(f'{emgs[-1].shape = }') # = {np.array(emg_traces).shape}')
     
         hf5.flush()
-    
+
+if len(trial_start_points[0]) == 1:
+    try:
+        hf5.remove_node('/emg_10sTrial_data', recursive = True)
+    except:
+        pass
+    hf5.create_group('/', 'emg_10sTrial_data')
+
+    for i in range(len(emg_pathname)): # for each emg channel
+        hf5.create_group('/emg_10sTrial_data', f'emg{i}')
+        emgs = []
+        exec("data = hf5.root.raw_emg.%s[:]" % emg_pathname[i].split('/')[-1])
+        
+        for channel in trial_channels: # for each digin trials
+            emg_10sTrial_traces = []
+
+            for t in range(len(bins)-1): # number of cue presented:
+                ts = bins[t] #trial_start_points[channel][trial] - pre_trial*int(sampling_rate/1000)
+                te = bins[t+1] #trial_end_points[channel][trial]
+                # raw_emg_data = data[ts:te] #start_points[dig_in_channel_nums[j]][k]-durations[0]*30:start_points[dig_in_channel_nums[j]][k]+durations[1]*30]
+                raw_emg_data = 0.195*(data[ts:te]) # *0.195 so to convert to microVolt
+                end = len(raw_emg_data) - len(raw_emg_data)%30 # 
+                emg_10sTrial_traces.append(np.mean(raw_emg_data[:end].reshape((-1, 30)), axis = 1))
+            emgs.append(padding_zeros(emg_10sTrial_traces))
+            emg_array = hf5.create_array(f'/emg_10sTrial_data/emg{i}', f'dig_in_{digin_nums[channel]}', padding_zeros(emg_10sTrial_traces))
+            print(f'{emgs[-1].shape = }') # = {np.array(emg_traces).shape}')
+        
+            hf5.flush()
+
+
 hf5.close()
 
 
