@@ -11,6 +11,7 @@ from pathlib import Path
 # Necessary blech_clust modules
 import read_file
 from write_file import make_powershell_parallel_script
+from util_tools import *
 
 # get path for blech_clust folder
 blech_clust_dir = os.getcwd()
@@ -46,10 +47,15 @@ hf5.create_group('/', 'digital_out')
 hf5.close()
 
 # Create directories to store waveforms, spike times, clustering results, and plots
-os.mkdir('spike_waveforms')
-os.mkdir('spike_times')
-os.mkdir('clustering_results')
-os.mkdir('Plots')
+recreate_folder("spike_waveforms")
+recreate_folder("spike_times")
+recreate_folder("clustering_results")
+recreate_folder("Plots")
+
+# os.mkdir('spike_waveforms')
+# os.mkdir('spike_times')
+# os.mkdir('clustering_results')
+# os.mkdir('Plots')
 
 # Get the amplifier ports used
 ports = list(set(f[4] for f in file_list if f[:3] == 'amp'))
@@ -201,7 +207,8 @@ channel_map_df.to_csv(os.path.join(dir_name, 'channel_map.csv'))
 
 
 # Make a directory for dumping files talking about memory usage in blech_process.py
-os.mkdir('memory_monitor_clustering')
+recreate_folder("memory_monitor_clustering")
+# os.mkdir('memory_monitor_clustering')
 
 # # Ask for the HPC queue to use - was in previous version, now just use all.q
 # clustering = easygui.multchoicebox(msg = 'Which method do you want to use for clustering waveforms?', choices = ('PCA', 'UMAP'))
