@@ -1,3 +1,16 @@
+"""
+To run the code in terminal: first setup DIRvariable and then run blech_clust.py as the following:
+1) DIR='the path to the directory where ephys data are saved'
+2) python blech_clust.py $DIR
+"""
+
+print("This is blech_clust.py, which is used to create hdf5 files from ephys data files, "
+      "\nand then run clustering on the data in the hdf5 files.")
+print("\nif you used EMG but forgot which channels they are, exit the script by hitting 'CTRL+C' "
+      "\n then run plot_raw_trace.py to visualize the data "
+      "\n and find out which channels are EMG channels."
+      "\n Then run blech_clust.py again to create the hdf5 files with the EMG channels included.")
+
 # Necessary python modules
 import easygui
 import os
@@ -24,9 +37,12 @@ try:
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
 
+# dir_name = '/media/jianyoulin/blech_ephys_backup/Experiment_7_EMG/MT_EMGs_Licking/CTA_cond_1/rato1_emgOnly_test/'
+
 # Get the type of data files (.rhd or .dat)
-file_type = easygui.multchoicebox(msg = 'What type of files am I dealing with?', 
-                                  choices = ('one file per channel', '.dat', '.rhd'))
+# file_type = easygui.multchoicebox(msg = 'What type of files am I dealing with?', 
+#                                   choices = ('one file per channel', '.dat', '.rhd'))
+file_type = ['one file per channel',]
 
 # Change to that directory
 os.chdir(dir_name)
@@ -51,11 +67,6 @@ recreate_folder("spike_waveforms")
 recreate_folder("spike_times")
 recreate_folder("clustering_results")
 recreate_folder("Plots")
-
-# os.mkdir('spike_waveforms')
-# os.mkdir('spike_times')
-# os.mkdir('clustering_results')
-# os.mkdir('Plots')
 
 # Get the amplifier ports used
 ports = list(set(f[4] for f in file_list if f[:3] == 'amp'))
@@ -90,6 +101,12 @@ e_channels = {}
 for port in ports:
     e_channels[port] = list(set(int(f[6:9]) for f in file_list if f[:5] == 'amp-{}'.format(port)))
 
+# show Raw recording signals
+try:
+    print('Write down which channels are EMG electrodes, if any')
+    show_png('./raw_traces.png')
+except FileNotFoundError:
+    pass
 
 # Get the emg electrode ports and channel numbers from the user
 # If only one amplifier port was used in the experiment, that's the emg_port. Else ask the user to specify
@@ -129,40 +146,47 @@ else:
     print("Only files structured as one file per channel can be read at this time...")
     sys.exit() # Terminate blech_clust if something else has been used - to be changed later
 
-# Read in clustering parameters
-clustering_params = easygui.multenterbox(msg = 'Fill in the parameters for clustering (using a GMM)', 
-                                         fields = ['Maximum number of clusters', 
-                                                   'Maximum number of iterations (1000 is more than enough)', 
-                                                   'Convergence criterion (usually 0.0001)', 
-                                                   'Number of random restarts for GMM (10 is more than enough)'],
-                                         values = [10, 1000, 0.0001, 10])
-# Read in data cleaning parameters (to account for cases when the headstage fell off mid-experiment)
-data_params = easygui.multenterbox(msg = 'Fill in the parameters for cleaning your data in case the head stage fell off', 
-                                   fields = ['Voltage cutoff for disconnected headstage noise (in microV, usually 1500)', 
-                                             'Maximum rate of cutoff breaches per sec (something like 0.2 is good if 1500 microV is the cutoff)', 
-                                             'Maximum number of allowed seconds with at least 1 cutoff breach (10 is good for a 30-60 min recording)', 
-                                             'Maximum allowed average number of cutoff breaches per sec (20 is a good number)', 
-                                             'Intra-cluster waveform amplitude SD cutoff - larger waveforms will be thrown out (3 would be a good number)'],
-                                    values = [3000, 2, 20, 40, 3])
-# Ask the user for the bandpass filter frequencies for pulling out spikes
-bandpass_params = easygui.multenterbox(msg = "Fill in the lower and upper frequencies for the bandpass filter for spike sorting", 
-                                       fields = ['Lower frequency cutoff (Hz)', 'Upper frequency cutoff (Hz)'],
-                                       values = [300, 3000])
-# Ask the user for the size of the spike snapshot to be used for sorting
-spike_snapshot = easygui.multenterbox(msg = "Fill in the size of the spike snapshot you want to use for sorting (use steps of 0.5ms - like 0.5, 1, 1.5, ..)", 
-                                      fields = ['Time before spike minimum (ms)', 'Time after spike minimum (ms)'],
-                                      values = [0.5, 1])
+# # Read in clustering parameters
+# clustering_params = easygui.multenterbox(msg = 'Fill in the parameters for clustering (using a GMM)', 
+#                                          fields = ['Maximum number of clusters', 
+#                                                    'Maximum number of iterations (1000 is more than enough)', 
+#                                                    'Convergence criterion (usually 0.0001)', 
+#                                                    'Number of random restarts for GMM (10 is more than enough)'],
+#                                          values = [10, 1000, 0.0001, 10])
+# # Read in data cleaning parameters (to account for cases when the headstage fell off mid-experiment)
+# data_params = easygui.multenterbox(msg = 'Fill in the parameters for cleaning your data in case the head stage fell off', 
+#                                    fields = ['Voltage cutoff for disconnected headstage noise (in microV, usually 1500)', 
+#                                              'Maximum rate of cutoff breaches per sec (something like 0.2 is good if 1500 microV is the cutoff)', 
+#                                              'Maximum number of allowed seconds with at least 1 cutoff breach (10 is good for a 30-60 min recording)', 
+#                                              'Maximum allowed average number of cutoff breaches per sec (20 is a good number)', 
+#                                              'Intra-cluster waveform amplitude SD cutoff - larger waveforms will be thrown out (3 would be a good number)'],
+#                                     values = [3000, 2, 20, 40, 3])
+# # Ask the user for the bandpass filter frequencies for pulling out spikes
+# bandpass_params = easygui.multenterbox(msg = "Fill in the lower and upper frequencies for the bandpass filter for spike sorting", 
+#                                        fields = ['Lower frequency cutoff (Hz)', 'Upper frequency cutoff (Hz)'],
+#                                        values = [300, 3000])
+# # Ask the user for the size of the spike snapshot to be used for sorting
+# spike_snapshot = easygui.multenterbox(msg = "Fill in the size of the spike snapshot you want to use for sorting (use steps of 0.5ms - like 0.5, 1, 1.5, ..)", 
+#                                       fields = ['Time before spike minimum (ms)', 'Time after spike minimum (ms)'],
+#                                       values = [0.5, 1])
 
 # And print them to a blech_params file
 f = open(Path(dir_name).name+'.params', 'w')
-for i in clustering_params:
-    print(i, file=f)
-for i in data_params:
-    print(i, file=f)
-for i in bandpass_params:
-    print(i, file=f)
-for i in spike_snapshot:
-    print(i, file=f)
+with open('/home/jianyoulin/Desktop/blech_clust/default_clustering_params.txt', 'r') as file:
+    for line in file:
+        # The 'line' variable will contain a single line from the file.
+        # It includes the newline character '\n' at the end.
+        # You can use .strip() to remove leading/trailing whitespace, including the newline.
+        ln = line.strip().split(':')
+        print(ln[1], file=f)
+# for i in clustering_params:
+#     print(i, file=f)
+# for i in data_params:
+#     print(i, file=f)
+# for i in bandpass_params:
+#     print(i, file=f)
+# for i in spike_snapshot:
+#     print(i, file=f)
 print(sampling_rate, file=f)
 f.close()
 
@@ -202,9 +226,6 @@ for p in ports:
 channel_map_df = pd.DataFrame(channel_map_dict)
 # save to data dir
 channel_map_df.to_csv(os.path.join(dir_name, 'channel_map.csv'))
-
-
-
 
 # Make a directory for dumping files talking about memory usage in blech_process.py
 recreate_folder("memory_monitor_clustering")
