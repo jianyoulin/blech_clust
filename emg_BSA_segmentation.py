@@ -12,8 +12,8 @@ os.chdir(dir_name)
 file_list = os.listdir('./')
 hdf5_name = ''
 for files in file_list:
-	if files[-2:] == 'h5':
-		hdf5_name = files
+    if files[-2:] == 'h5':
+        hdf5_name = files
 
 # Open the hdf5 file
 hf5 = tables.open_file(hdf5_name, 'r+')
@@ -36,10 +36,13 @@ except:
     unique_lasers = np.load('laser_combination_d_l.npy')
     laser_durs = np.load('laser_durations.npy')
     num_tastes, num_trials = laser_durs.shape
+    print(trials)
 
 # Ask the user for the pre-stimulus time used
-# pre_stim = easygui.multenterbox(msg = 'Enter the pre-stimulus time for the spike trains', fields = ['Pre stim (ms)'])
-# pre_stim = int(pre_stim[0])
+pre_stim = easygui.multenterbox(msg = 'Enter the pre-stimulus time for the spike trains', 
+                                fields = ['Pre stim (ms)'], 
+                                values=[2000])
+pre_stim = int(pre_stim[0])
 # Save the entire time window of BSA analysis instead
 
 # Now run through the tastes, and stack up the BSA results for the EMG responses by trials
@@ -47,9 +50,9 @@ trials_by_taste = []
 emg_BSA_results = hf5.root.emg_BSA_results.taste0_p[:, :, :]
 trials_by_taste.append(emg_BSA_results.shape[0])
 for i in range(num_tastes - 1):
-	exec("this_BSA_results = hf5.root.emg_BSA_results.taste" + str(i+1) + "_p[:, :, :]")
-	trials_by_taste.append(this_BSA_results.shape[0])
-	emg_BSA_results = np.vstack((emg_BSA_results[:], this_BSA_results[:]))
+    exec("this_BSA_results = hf5.root.emg_BSA_results.taste" + str(i+1) + "_p[:, :, :]")
+    trials_by_taste.append(this_BSA_results.shape[0])
+    emg_BSA_results = np.vstack((emg_BSA_results[:], this_BSA_results[:]))
     # exec("emg_BSA_results = np.vstack((emg_BSA_results[:], hf5.root.emg_BSA_results.taste" + str(i+1) + "_p[:, :, :]))")
 
 # Now run through the consolidated array of emg_BSA_results and check for activity in the gape/LTP range
@@ -74,25 +77,25 @@ sig_trials = np.reshape(sig_trials, (sig_trials.shape[0]*sig_trials.shape[1]))
 
 # Now arrange these arrays by laser condition X taste X time
 min_trials = min(trials_by_taste)
-final_emg_BSA_results = np.empty((len(trials), num_tastes, min_trials,  emg_BSA_results.shape[1], emg_BSA_results.shape[2]), dtype = float) 
-final_gapes = np.empty((len(trials), num_tastes, min_trials,  gapes.shape[1]), dtype = float)
-final_ltps = np.empty((len(trials), num_tastes, min_trials, ltps.shape[1]), dtype = float)
-final_sig_trials = np.empty((len(trials), num_tastes, min_trials), dtype = float)
+final_emg_BSA_results = np.empty((len(trials), num_tastes, int(min_trials/len(trials)),  emg_BSA_results.shape[1], emg_BSA_results.shape[2]), dtype = float) 
+final_gapes = np.empty((len(trials), num_tastes, int(min_trials/len(trials)),  gapes.shape[1]), dtype = float)
+final_ltps = np.empty((len(trials), num_tastes, int(min_trials/len(trials)), ltps.shape[1]), dtype = float)
+final_sig_trials = np.empty((len(trials), num_tastes, int(min_trials/len(trials))), dtype = float)
 
 # Fill up these arrays
 cum_trials = np.insert(trials_by_taste, 0, 0)
 cum_trials = np.cumsum(cum_trials)
 print(cum_trials)
 for i in range(len(trials)): # number of laser conditions
-	for j in range(num_tastes):
-		trial_s, trial_e = cum_trials[j], min(cum_trials[j] + min_trials, cum_trials[j+1])
-		print(trial_s, trial_e)
-		# a = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :]
-		# print(a.shape)
-		final_emg_BSA_results[i, j, :, :, :] = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :]
-		final_gapes[i, j, :,  :] = gapes[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :]
-		final_ltps[i, j, :, :] = ltps[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :]
-		final_sig_trials[i, j, :] = sig_trials[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)]]
+    for j in range(num_tastes):
+        trial_s, trial_e = cum_trials[j], min(cum_trials[j] + min_trials, cum_trials[j+1])
+        print(trial_s, trial_e)
+        # a = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :]
+        # print(a.shape)
+        final_emg_BSA_results[i, j, :, :, :] = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :]
+        final_gapes[i, j, :,  :] = gapes[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :]
+        final_ltps[i, j, :, :] = ltps[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :]
+        final_sig_trials[i, j, :] = sig_trials[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)]]
 
 # # Fill up these arrays
 # trials_by_taste.insert(0, 0)
@@ -109,18 +112,18 @@ for i in range(len(trials)): # number of laser conditions
 # Save these arrays to file unde the /emg_analysis node
 # Create an ancillary_analysis group in the hdf5 file, and write these arrays to that group
 try:
-	hf5.remove_node('/emg_bsa', recursive = True)
+    hf5.remove_node('/emg_bsa', recursive = True)
 except:
-	pass
+    pass
 hf5.create_group('/', 'emg_bsa')
 
 try:
-	hf5.remove_node('/emg_bsa/gapes')
-	hf5.remove_node('/emg_bsa/ltps')
-	hf5.remove_node('/emg_bsa/sig_trials')
+    hf5.remove_node('/emg_bsa/gapes')
+    hf5.remove_node('/emg_bsa/ltps')
+    hf5.remove_node('/emg_bsa/sig_trials')
 #	hf5.remove_node('/ancillary_analysis/emg_BSA_results')
 except:
-	pass
+    pass
 hf5.create_array('/emg_bsa', 'gapes', final_gapes)
 hf5.create_array('/emg_bsa', 'ltps', final_ltps)
 hf5.create_array('/emg_bsa', 'sig_trials', final_sig_trials)
@@ -130,13 +133,15 @@ np.save('emg_BSA_results.npy', final_emg_BSA_results)
 # plot emg bsa gapes probability
 n_lasers, n_tastes, n_trials, n_time = final_gapes.shape
 
-x_ticks = np.arange(n_time)[::1000]
+# set boundaries for the duration of emg data to be plotted
+time_start, time_end = -500, 2500
+x_ticks = np.arange(time_end-time_start)[::500]
 fig, ax = plt.subplots(1, n_lasers, sharey=True, squeeze=False, figsize=(4*n_lasers, 6))
 for i in range(n_lasers):
-    gapes_conc = np.concatenate([final_gapes[i, t,:,:] for t in range(n_tastes)])
+    gapes_conc = np.concatenate([final_gapes[i, t,:,time_start+pre_stim:time_end+pre_stim] for t in range(n_tastes)])
     ax[0, i].imshow(gapes_conc, origin='lower', aspect='auto')
-    ax[0, i].set_xticks(x_ticks, x_ticks-2000)
-    ax[0, i].set_xlabel('Time from taste delivery (ms)')
+    ax[0, i].set_xticks(x_ticks, (x_ticks+time_start)/1000)
+    ax[0, i].set_xlabel('Time from taste delivery (m)')
     ax[0, i].set_title(f'Laser_condition {i}')
     if i == 0:
         ax[0, i].set_ylabel('All trials')
@@ -147,14 +152,12 @@ plt.close()
 
 # plot emg bsa licks probability
 n_lasers, n_tastes, n_trials, n_time = final_ltps.shape
-
-x_ticks = np.arange(n_time)[::1000]
 fig, ax = plt.subplots(1, n_lasers, sharey=True, squeeze=False, figsize=(4*n_lasers, 6))
 for i in range(n_lasers):
-    licks_conc = np.concatenate([final_ltps[i, t,:,:] for t in range(n_tastes)])
+    licks_conc = np.concatenate([final_ltps[i, t,:,time_start+pre_stim:time_end+pre_stim] for t in range(n_tastes)])
     ax[0, i].imshow(licks_conc, origin='lower', aspect='auto')
-    ax[0, i].set_xticks(x_ticks, x_ticks-2000)
-    ax[0, i].set_xlabel('Time from taste delivery (ms)')
+    ax[0, i].set_xticks(x_ticks, (x_ticks+time_start)/1000)
+    ax[0, i].set_xlabel('Time from taste delivery (s)')
     ax[0, i].set_title(f'Laser_condition {i}')
     if i == 0:
         ax[0, i].set_ylabel('Trials')
