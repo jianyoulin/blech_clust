@@ -2,6 +2,7 @@ import tables
 import numpy as np
 import easygui
 import os
+import sys
 import matplotlib.pyplot as plt
 
 # Get name of directory with the data files
