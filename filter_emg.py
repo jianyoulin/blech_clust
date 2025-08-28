@@ -5,10 +5,17 @@ import numpy as np
 from scipy.signal import butter, filtfilt, periodogram
 import easygui
 import os
+import sys
 import matplotlib.pyplot as plt
 
-# Ask for the directory where the data (emg_data.npy) sits
-dir_name = easygui.diropenbox()
+# Get name of directory with the data files
+try:
+    dir_name = sys.argv[1]
+    if dir_name == '-f':
+        dir_name = easygui.diropenbox('Select the dir path where data are saved')
+except:
+    dir_name = easygui.diropenbox('Select the dir path where data are saved')
+
 os.chdir(dir_name)
 
 # Load the data
