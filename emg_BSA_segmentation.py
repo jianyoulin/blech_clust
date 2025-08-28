@@ -4,8 +4,14 @@ import easygui
 import os
 import matplotlib.pyplot as plt
 
-# Ask for the directory where the hdf5 file sits, and change to that directory
-dir_name = easygui.diropenbox()
+# Get name of directory with the data files
+try:
+    dir_name = sys.argv[1]
+    if dir_name == '-f':
+        dir_name = easygui.diropenbox('Select the dir path where data are saved')
+except:
+    dir_name = easygui.diropenbox('Select the dir path where data are saved')
+
 os.chdir(dir_name)
 
 # Look for the hdf5 file in the directory
