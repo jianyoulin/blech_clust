@@ -7,10 +7,17 @@ All the output files will be saved to p (named by tastes) and omega in the hdf5 
 import numpy as np
 import easygui
 import os
+import sys
 import tables
     
-# Ask the user to navigate to the directory that hosts the emg_data, and change to it
-dir_name = easygui.diropenbox()
+# Get name of directory with the data files
+try:
+    dir_name = sys.argv[1]
+    if dir_name == '-f':
+        dir_name = easygui.diropenbox('Select the dir path where data are saved')
+except:
+    dir_name = easygui.diropenbox('Select the dir path where data are saved')
+
 os.chdir(dir_name)
 
 # Look for the hdf5 file in the directory
