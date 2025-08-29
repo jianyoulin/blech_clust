@@ -92,6 +92,7 @@ final_sig_trials = np.empty((len(trials), num_tastes, int(min_trials/len(trials)
 # Fill up these arrays
 cum_trials = np.insert(trials_by_taste, 0, 0)
 cum_trials = np.cumsum(cum_trials)
+min_laser_trials = final_emg_BSA_results.shape[2]
 print(cum_trials)
 for i in range(len(trials)): # number of laser conditions
     for j in range(num_tastes):
@@ -99,10 +100,10 @@ for i in range(len(trials)): # number of laser conditions
         print(trial_s, trial_e)
         # a = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :]
         # print(a.shape)
-        final_emg_BSA_results[i, j, :, :, :] = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :]
-        final_gapes[i, j, :,  :] = gapes[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :]
-        final_ltps[i, j, :, :] = ltps[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :]
-        final_sig_trials[i, j, :] = sig_trials[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)]]
+        final_emg_BSA_results[i, j, :, :, :] = emg_BSA_results[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :, :][:min_laser_trials,:,:]
+        final_gapes[i, j, :,  :] = gapes[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :][:min_laser_trials,:]
+        final_ltps[i, j, :, :] = ltps[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)], :][:min_laser_trials,:]
+        final_sig_trials[i, j, :] = sig_trials[trials[i][np.where((trials[i] >= trial_s)*(trials[i] < trial_e) == True)]][:min_laser_trials]
 
 # # Fill up these arrays
 # trials_by_taste.insert(0, 0)
