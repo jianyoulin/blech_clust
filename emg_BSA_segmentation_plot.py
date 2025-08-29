@@ -131,7 +131,9 @@ os.chdir(dir_name)
 pre_stim = int(pre_stim[0])
 
 # Ask the user for the time limits to plot the results upto
-time_limits = easygui.multenterbox(msg = 'Enter the time limits to be used in the plots', fields = ['Pre stim (ms)', 'Post stim (ms)'])
+time_limits = easygui.multenterbox(msg = 'Enter the time limits to be used in the plots', 
+								   fields = ['Pre stim (ms)', 'Post stim (ms)'],
+								   values = [-1000, 2500])
 for i in range(len(time_limits)):
 	time_limits[i] = int(time_limits[i])
 
@@ -234,7 +236,12 @@ for i in range(gape_trials_Li.shape[1]):
 #.................................
 
 # Ask the user for the parameters to use for emg segmentation
-params = easygui.multenterbox(msg = 'Enter the parameters for EMG segmentation', fields = ['Minimum onset lag for gapes and ltps (ms) - usually 500', 'Minimum length of acceptable gape bout (ms) - usually 300', 'Minimum length of acceptable ltp bout (ms) - usually 150', 'Maximum length of broken gape bout (ms) - usually 100', 'Maximum length of broken ltp bout (ms) - usually 50'])
+params = easygui.multenterbox(msg = 'Enter the parameters for EMG segmentation',
+							  fields = ['Minimum onset lag for gapes and ltps (ms) - usually 500',
+				   'Minimum length of acceptable gape bout (ms) - usually 300', 
+				   'Minimum length of acceptable ltp bout (ms) - usually 150', 
+				   'Maximum length of broken gape bout (ms) - usually 100', 
+				   'Maximum length of broken ltp bout (ms) - usually 50'])
 min_onset_lag = int(params[0])
 min_gape_len = int(params[1])
 min_ltp_len = int(params[2])
