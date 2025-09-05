@@ -37,8 +37,6 @@ try:
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
 
-# dir_name = '/media/jianyoulin/blech_ephys_backup/Experiment_7_EMG/MT_EMGs_Licking/CTA_cond_1/rato1_emgOnly_test/'
-
 # Get the type of data files (.rhd or .dat)
 # file_type = easygui.multchoicebox(msg = 'What type of files am I dealing with?', 
 #                                   choices = ('one file per channel', '.dat', '.rhd'))
@@ -100,6 +98,7 @@ else:
 e_channels = {}
 for port in ports:
     e_channels[port] = list(set(int(f[6:9]) for f in file_list if f[:5] == 'amp-{}'.format(port)))
+all_channels = np.concatenate(tuple(e_channels[k] for k in e_channels.keys()))
 
 # show Raw recording signals
 try:
@@ -120,7 +119,7 @@ else:
                                      choices = tuple(ports))
 # Now get the emg channel numbers, and convert them to integers
 emg_channels = easygui.multchoicebox(msg = 'Choose the channel numbers for the EMG electrodes. Click clear all and ok if you did not use an EMG electrode', 
-                                     choices = tuple([i for i in range(len(e_channels[emg_port[0]]))]))
+                                     choices = all_channels) #tuple([i for i in range(len(e_channels[emg_port[0]]))]))
 if emg_channels:
     for i in range(len(emg_channels)):
         emg_channels[i] = int(emg_channels[i])
