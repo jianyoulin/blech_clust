@@ -14,7 +14,6 @@ try:
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
 
-dir_name = '/media/jianyoulin/Vol_A/KM_emg_testing/with_2_lasers_KM200/'
 os.chdir(dir_name)
 
 # Look for the hdf5 file in the directory
