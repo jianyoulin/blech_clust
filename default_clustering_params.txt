@@ -1,0 +1,13 @@
+Maximum number of clusters:10
+Maximum number of iterations:1000
+Convergence criterion:0.0001
+Number of random restarts for GMM:10
+Voltage cutoff:3000
+Maximum rate of cutoff breaches per sec:2
+Maximum number of allowed seconds:20
+Maximum allowed average number of cutoff breaches:40
+Intra-cluster waveform amplitude SD cutoff:3
+Lower frequency cutoff (Hz):300
+Upper frequency cutoff (Hz):3000
+Time before spike minimum (ms):0.5
+Time after spike minimum (ms):1
