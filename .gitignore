@@ -1,6 +1,7 @@
 *.dir
 *.sh
 *.ps1
+*.pyc
 .gitignore
 umap_dir.txt
 error_notes.txt
