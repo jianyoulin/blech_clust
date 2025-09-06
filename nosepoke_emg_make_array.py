@@ -31,7 +31,7 @@ try:
         dir_name = easygui.diropenbox('Select the dir path where data are saved')
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
-# dir_name = '/media/jianyoulin/blech_ephys_backup/Experiment_7_EMG/MT_EMGs_Licking/MT05_S2_VEH_250715_114644/'
+
 # Change to that directory
 os.chdir(dir_name)
 
@@ -63,6 +63,7 @@ for i, j in enumerate(digin_signals):
 f.close()
 
 # get digins and params
+file_list = os.listdir('./')
 for file in file_list:
     if 'digin_info' in file:
         digin_info_file = file
@@ -124,7 +125,7 @@ for on_times in dig_on: #[:len(digin_tastes)]:
     trial_end_points.append(np.array(t_ends))
     print(trial_end_points[-1])
 
-print(f'{len(trial_start_points[0])}')
+print(f'{len(trial_start_points[1])}')
 # # read in experiment info
 # f = open(json_file)
 # params = json.load(f)
@@ -150,11 +151,17 @@ hf5.create_group('/', 'nosepoke_trains')
 # (# trials x trial duration (ms)) - use start of digital input pulse as the time of cue (trial) starts
 # 11 as intaninput for nose poke IR (lick)
 
-# which channel to be used for poke trains trial-wise  
+# which channel to be used for parsing signals trial-wise  
 trial_channels = []
+message = 'Which digital input channels should be used' +\
+    ' to produce spike/emg data trial-wise?'
+trial_channels = easygui.multchoicebox(msg = message, 
+                                        choices = ([sig for sig in digin_signals]))
+trial_channel_num = []
+
 for i, sig in enumerate(digin_signals): # sig = signals
-    if 'Position' in sig:
-        trial_channels.append(i)
+    if sig in trial_channels: #'Position' in sig or 'IOC' in sig: # 'LED' in sig or 'Touch' in sig or
+        trial_channel_num.append(i)
         
 def padding_zeros(list):
     """
@@ -170,7 +177,7 @@ def padding_zeros(list):
     return arr
 
 spout_pokes = {}
-for i in trial_channels:
+for i in trial_channel_num:
     spout_pokes[f'dig_in_{digin_nums[i]}'] = []
 
     # digin_11, 2nd list of start_points list
@@ -205,7 +212,7 @@ if len(trial_start_points[0]) == 1:
     total_length = np.sum(dig_in[2,:])
 
     spout_pokes_10sec = {}
-    for i in trial_channels:
+    for i in trial_channel_num:
         bins = np.arange(trial_start_points[i][0], total_length, trial_dur)
         spout_pokes_10sec[f'dig_in_{digin_nums[i]}'] = []
 
@@ -237,7 +244,7 @@ hf5.create_group('/', 'nosepoke_lengths')
 
 pokes = dig_in[1, :] # nosepoke digin signal
 pokes_lens = {}
-for i in trial_channels: # digin channels used to trial alignment
+for i in trial_channel_num: # digin channels used to trial alignment
     pokes_lens[f'dig_in_{digin_nums[i]}'] = []
 
     # digin_11, 2nd list of start_points list
@@ -266,13 +273,12 @@ emg_pathname = []
 for node in emg_nodes:
     emg_pathname.append(node._v_pathname)
     
-    
 for i in range(len(emg_pathname)): # for each emg channel
     hf5.create_group('/emg_data', f'emg{i}')
     emgs = []
     exec("data = hf5.root.raw_emg.%s[:]" % emg_pathname[i].split('/')[-1])
     
-    for channel in trial_channels: # for each digin trials
+    for channel in trial_channel_num: # for each digin/taste trials
         emg_traces = []
 
         for trial in range(len(trial_start_points[channel])): # number of cue presented:
@@ -303,7 +309,7 @@ if len(trial_start_points[0]) == 1:
         emgs = []
         exec("data = hf5.root.raw_emg.%s[:]" % emg_pathname[i].split('/')[-1])
         
-        for channel in trial_channels: # for each digin trials
+        for channel in trial_channel_num: # for each digin trials
             emg_10sTrial_traces = []
 
             for t in range(len(bins)-1): # number of cue presented:
