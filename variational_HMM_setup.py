@@ -6,7 +6,8 @@ import sys
 import os
 
 # Ask for the directory where the hdf5 file sits
-dir_name = easygui.diropenbox()
+# dir_name = easygui.diropenbox()
+dir_name = '/media/jianyoulin/Vol_B/KM_EMG_data/KM90_5tastes_250824_121311/'
 
 # Store the directory path to blech.dir
 f = open('blech.dir', 'w')

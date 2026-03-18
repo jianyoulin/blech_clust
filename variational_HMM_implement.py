@@ -8,7 +8,7 @@ import pylab as plt
 import multiprocessing as mp
 import pickle
 # Import PyHMM
-sys.path.append('/home/narendra/Desktop/PyHMM/PyHMM')
+sys.path.append('/home/jianyoulin/Desktop/PyHMM/PyHMM')
 import DiscreteHMM as dhmm
 import variationalHMM as vhmm
 from hinton import hinton
