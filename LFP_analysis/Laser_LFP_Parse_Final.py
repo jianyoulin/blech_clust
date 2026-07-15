@@ -18,7 +18,7 @@ try:
         dir_name = easygui.diropenbox('Select the dir path where data are saved')
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
-
+os.chdir(dir_name)
 
 #Look for the hdf5 file in the directory
 file_list = os.listdir('./')
@@ -77,9 +77,11 @@ for i in range(0, time - params[0] + params[1], params[1]):
 
 
 # First pull out the unique laser(duration,lag) combinations - these are the same irrespective of the unit and time
-unique_lasers = np.vstack({tuple(row) for row in laser[0, 0, :, :]})
-unique_lasers = unique_lasers[unique_lasers[:, 0].argsort(), :]
-unique_lasers = unique_lasers[unique_lasers[:, 1].argsort(), :]
+laser_con = laser[0,0,:,:]
+# print(f'{laser_con.shape=}')
+unique_lasers = [tuple(laser_con[i,:]) for i in range(laser_con.shape[0])]
+unique_lasers = np.unique(unique_lasers, axis=0)
+
 # Now get the sets of trials with these unique duration and lag combinations
 trials = []
 for i in range(len(unique_lasers)):
@@ -88,10 +90,6 @@ for i in range(len(unique_lasers)):
     trials = np.array(trials)
 laser_trials = trials.copy()
 laser_conditions = unique_lasers.copy()
-
-# #Get laser conditions from hdf5 file (after ancillary analysis.py)
-# laser_conditions = hf5.root.ancillary_analysis.laser_combination_d_l[:]
-# laser_trials = hf5.root.ancillary_analysis.trials[:]
 
 # Run through the tastes and laser conditions, and build arrays with respective data
 for x in range(laser_conditions.shape[0]):
@@ -116,5 +114,6 @@ for x in range(laser_conditions.shape[0]):
         hf5.create_array('/LFP_Lasers/%s' % las_type, '%s' %taste, laser_trial_LFPs)
         hf5.flush()
 
-print("If you want to compress the file to release disk space, run 'blech_hdf5_repack.py' upon completion.")        
+print("If you want to compress the file to release disk space,"+\
+      "\nrun 'blech_hdf5_repack.py' upon completion.")        
 hf5.close()
