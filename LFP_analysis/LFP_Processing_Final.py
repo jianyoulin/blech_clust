@@ -14,6 +14,7 @@ try:
 except:
     dir_name = easygui.diropenbox('Select the dir path where data are saved')
 
+os.chdir(dir_name)
 
 #Look for the hdf5 file in the directory
 file_list = os.listdir('./')
@@ -32,7 +33,9 @@ electrodegroup = hf5.root.unit_descriptor[:]['electrode_number']
 electrodegroup = np.unique(electrodegroup)
 
 #Dictate whether EMG electrodes are present (based on experimental configuration) and allocate file names accordingly
-noncell_channels = easygui.integerbox(msg='Number of channels', title='Purposes other than cell recording (i.e. EMG)', default='0',lowerbound=0,upperbound=64)
+noncell_channels = easygui.integerbox(msg='Number of channels', 
+                                      title='Purposes other than cell recording (i.e. EMG)', 
+                                      default='0',lowerbound=0,upperbound=64)
 
 if noncell_channels == 0:		#If all channels are used for cell recording, move on.
     fieldValues = []
@@ -159,7 +162,7 @@ except:
 hf5.create_group('/', 'Parsed_LFP')
 
 # Ask if this analysis is looking at more than 1 trial and/or taste
-msg   = "Do you want to create LFPs for more than ONE trial (ie. Do you have several tastes) ?"
+msg   = "Do you want to slice LFPs based on trial initiations for each taste?"
 trial_check = easygui.buttonbox(msg,choices = ["Yes","No"])
 
 # Run through the tastes if user said there are more than 1 trial
@@ -198,6 +201,6 @@ if rawLFPdelete == "Yes":
     hf5.remove_node('/raw_LFP', recursive = True)
 hf5.flush()
 
-print("If you want to compress the file to release disk space, run 'blech_hdf5_repack.py' upon completion.")
+print("If you want to compress the file to release disk space,"+"\nrun 'blech_hdf5_repack.py' upon completion.")
 hf5.close()
 
