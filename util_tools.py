@@ -111,10 +111,9 @@ def cut_DAT_files(dat_path, duration_to_keep):
 
             # 3. Define your cut window (in sample indices)
             # Example: keep from sample 10,000 to 50,000
-            start_sample = 0
             end_sample = 30 * 1000 * (int(duration_to_keep) * 60) # 50 min of data
 
-            sliced_data = data_mm[start_sample:end_sample] #, :]
+            sliced_data = data_mm[:end_sample] #, :]
 
             # 4. Save the sliced portion to a new .dat file
             with open(output_path, 'wb') as f:
