@@ -89,7 +89,7 @@ def cut_DAT_files(dat_path, duration_to_keep):
     """
     dat_path:: where raw intan recording files are saved
     duration_to_keep (int):: duration of recording to keep in minutes
-    only cut MAP and DIN files
+    only cut AMP and DIN files
     """
     files = os.listdir(dat_path)
     for file_name in files:
