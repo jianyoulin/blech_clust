@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import shutil
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -79,4 +80,42 @@ def padding_list(lists, padding_value=999):
     """
     max_length = max(len(lst) for lst in lists)
     padded_lists = [lst + [padding_value] * (max_length - len(lst)) for lst in lists]
-    return padded_lists            
+    return padded_lists
+
+# function that cut short of .dat file from Intan recordings
+
+# Configuration parameters
+def cut_DAT_files(dat_path, duration_to_keep):
+    """
+    dat_path:: where raw intan recording files are saved
+    duration_to_keep (int):: duration of recording to keep in minutes
+    only cut MAP and DIN files
+    """
+    files = os.listdir(dat_path)
+    for file_name in files:
+        if ('amp' in file_name) or ('DIN' in file_name):
+            input_path = os.path.join(dat_path, file_name)
+            output_name = file_name.split('.')[0]+'-short'+'.dat' 
+            output_path = os.path.join(dat_path, output_name)
+            dtype_size = np.int16
+
+            # 1. Calculate total samples based on file size
+            file_size_bytes = os.path.getsize(input_path)
+            bytes_per_sample = np.dtype(dtype_size).itemsize
+            total_samples = file_size_bytes // bytes_per_sample #(num_channels * bytes_per_sample)
+
+            # 2. Memory-map the file to avoid loading all data into RAM
+            data_mm = np.memmap(
+                input_path, dtype=dtype_size, mode='r', shape=(total_samples)
+            )
+
+            # 3. Define your cut window (in sample indices)
+            # Example: keep from sample 10,000 to 50,000
+            start_sample = 0
+            end_sample = 30 * 1000 * (int(duration_to_keep) * 60) # 50 min of data
+
+            sliced_data = data_mm[start_sample:end_sample] #, :]
+
+            # 4. Save the sliced portion to a new .dat file
+            with open(output_path, 'wb') as f:
+                sliced_data.tofile(f)            
