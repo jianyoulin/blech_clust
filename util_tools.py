@@ -92,8 +92,12 @@ def cut_DAT_files(dat_path, duration_to_keep):
     only cut AMP and DIN files
     """
     files = os.listdir(dat_path)
+    # make a folder to save initial long files
+    long_f_folders = os.path.join(dat_path, 'long_files')
+    os.makedirs(long_f_folders, exist_ok=True)
     for file_name in files:
         if ('amp' in file_name) or ('DIN' in file_name):
+            print(file_name)
             input_path = os.path.join(dat_path, file_name)
             output_name = file_name.split('.')[0]+'-short'+'.dat' 
             output_path = os.path.join(dat_path, output_name)
@@ -117,4 +121,17 @@ def cut_DAT_files(dat_path, duration_to_keep):
 
             # 4. Save the sliced portion to a new .dat file
             with open(output_path, 'wb') as f:
-                sliced_data.tofile(f)            
+                sliced_data.tofile(f)
+
+            # 5. Move long recorded file to the backup folder
+            shutil.move(input_path, long_f_folders)
+
+    # 6. Rename the shortened file
+    files = os.listdir(dat_path)
+    for f in files:
+        if '-short' in f:
+            re_name = f.replace("-short", "")
+            old_name = os.path.join(dat_path, f)
+            new_name = os.path.join(dat_path, re_name)
+            print(f, re_name)
+            os.rename(old_name, new_name)
