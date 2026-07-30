@@ -94,7 +94,7 @@ def cut_DAT_files(dat_path, duration_to_keep):
     files = os.listdir(dat_path)
     # make a folder to save initial long files
     long_f_folders = os.path.join(dat_path, 'long_files')
-    os.makedirs(long_f_folders, exist_ok=True)
+    recreate_folder(long_f_folders)
     for file_name in files:
         if ('amp' in file_name) or ('DIN' in file_name):
             print(file_name)
