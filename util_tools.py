@@ -96,12 +96,13 @@ def cut_DAT_files(dat_path, duration_to_keep):
     long_f_folders = os.path.join(dat_path, 'long_files')
     recreate_folder(long_f_folders)
     for file_name in files:
-        if ('amp' in file_name) or ('DIN' in file_name):
+        # only cut AMP, DIN, and time files
+        if ('amp' in file_name) or ('DIN' in file_name) or ('time' in file_name) or ('vdd' in file_name):
             print(file_name)
             input_path = os.path.join(dat_path, file_name)
             output_name = file_name.split('.')[0]+'-short'+'.dat' 
             output_path = os.path.join(dat_path, output_name)
-            dtype_size = np.int16
+            dtype_size = np.int32 if 'time' in file_name else np.int16
 
             # 1. Calculate total samples based on file size
             file_size_bytes = os.path.getsize(input_path)
