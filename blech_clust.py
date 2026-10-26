@@ -20,6 +20,8 @@ import numpy as np
 import pandas as pd
 import multiprocessing
 from pathlib import Path
+import platform
+import subprocess
 
 # Necessary blech_clust modules
 import read_file
@@ -171,7 +173,8 @@ else:
 
 # And print them to a blech_params file
 f = open(Path(dir_name).name+'.params', 'w')
-with open('/home/jianyoulin/Desktop/blech_clust/default_clustering_params.txt', 'r') as file:
+params_file = Path(blech_clust_dir) / 'default_clustering_params.txt'
+with open(params_file, 'r') as file:
     for line in file:
         # The 'line' variable will contain a single line from the file.
         # It includes the newline character '\n' at the end.
@@ -202,10 +205,8 @@ for p in ports:
         else:
             channel_map_list.append(','.join([p, str(e), str(eds), 'Electrode']))
 
-areas = easygui.multenterbox(msg = 'Fill in areas the electrode is recording)',
-                             fields = channel_map_list,
-                             values = ['GC' if 'EMG' not in channel else 'Muscle' \
-                                       for channel in channel_map_list])
+areas = ['GC' if 'EMG' not in channel else 'Muscle' \
+         for channel in channel_map_list]
 
 channel_map_dict = {'headstage_port':[], 'amp_ch':[], 'electrode_type':[], 
                     'electrode_num': [], 'area':[]}
@@ -226,6 +227,22 @@ channel_map_df = pd.DataFrame(channel_map_dict)
 # save to data dir
 channel_map_df.to_csv(os.path.join(dir_name, 'channel_map.csv'))
 
+# Open the file and pause Python until the window is closed
+channel_map_file = Path(dir_name) / 'channel_map.csv'
+current_os = platform.system()
+
+# open the channel map file for user to confirm the areas of the electrodes, and edit if necessary
+if current_os == "Windows":
+    subprocess.run(["notepad.exe", channel_map_file])
+elif current_os == "Darwin":  # macOS
+    # subprocess.run(["open", "-a", "TextEdit", "-W", channel_map_file])
+    subprocess.run(["nano", channel_map_file])
+else:  # Linux
+    subprocess.run(["gedit", channel_map_file])
+
+# Python resumes HERE after you close the file
+print("\n--- Channel map file closed! Resuming Python script... ---")
+
 # Make a directory for dumping files talking about memory usage in blech_process.py
 recreate_folder("memory_monitor_clustering")
 # os.mkdir('memory_monitor_clustering')
@@ -245,21 +262,8 @@ except:
 # Dump shell file(s) for running GNU parallel job on the user's blech_clust folder on the desktop
 # First get number of CPUs - parallel be asked to run num_cpu-1 threads in parallel
 num_cpu = multiprocessing.cpu_count()//2 # number of cpu cores to be used in clustering
+
 # Then produce the file generating the parallel command
-
-# n_electrodes = 0
-# for port in ports:
-#     n_electrodes = n_electrodes + len(e_channels[port])
-
-# f = open('blech_clust_jetstream_parallel.sh', 'w')
-# # print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed --joblog {:s}/results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".format(int(num_cpu)-1, dir_name, int(n_electrodes-len(emg_channels))), file = f)
-
-# print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed --joblog {:s}{}results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".format(int(num_cpu), dir_name, os.path.sep, int(n_electrodes-len(emg_channels))), file = f)
-
-# print("parallel -k -j {:d} --noswap --load 100% --progress --memfree 4G --retry-failed "\
-#       "--joblog {:s}{}results.log bash blech_clust_jetstream_parallel1.sh ::: {{1..{:d}}}".\
-#         format(int(num_cpu), dir_name, os.path.sep, int(n_electrodes-len(emg_channels))), file = f)
-# f.close()
 all_electrodes = np.concatenate(tuple(e_channels[k] for k in e_channels.keys()))
 
 if 'win' in sys.platform:
