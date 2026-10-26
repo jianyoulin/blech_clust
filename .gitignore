@@ -5,6 +5,8 @@
 .gitignore
 umap_dir.txt
 error_notes.txt
+.DS_Store
+settings.json
 
 # ignore files in folder
 temp_backup/
